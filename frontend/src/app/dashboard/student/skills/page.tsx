@@ -5,6 +5,7 @@ import { apiRequest, SkillItem } from "@/lib/api";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SkillAutocompleteInput } from "@/components/ui/SkillAutocompleteInput";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -190,12 +191,14 @@ export default function StudentSkillsPage() {
         description="Provide accurate skill details and your true experience level."
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
+          <SkillAutocompleteInput
             label="Skill Name"
-            placeholder="e.g. Java, React, PostgreSQL"
+            placeholder="Type skill name (e.g. Java, React, Docker)..."
             value={formName}
-            onChange={(e) => setFormName(e.target.value)}
+            onChange={(val) => setFormName(val)}
+            onSelectCategory={(cat) => setFormCategory(cat)}
             required
+            helperText="Type any letter (e.g. 'j') to see matching technology suggestions."
           />
 
           <div className="space-y-1.5">

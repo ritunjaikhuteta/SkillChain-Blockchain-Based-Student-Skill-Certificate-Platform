@@ -6,6 +6,7 @@ import { apiRequest, SkillItem, SkillRecommendationDto, ShortestPathDto } from "
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { SkillAutocompleteInput } from "@/components/ui/SkillAutocompleteInput";
 import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import {
@@ -183,18 +184,18 @@ export default function StudentRecommendationsPage() {
         <CardContent className="pt-4 space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
             <div className="sm:col-span-2 space-y-1">
-              <label className="text-[11px] font-mono text-[#77756F] uppercase">Starting Competency</label>
-              <Input
+              <SkillAutocompleteInput
+                label="Starting Competency"
                 value={fromSkill}
-                onChange={(e) => setFromSkill(e.target.value)}
+                onChange={(val) => setFromSkill(val)}
                 placeholder="e.g. Java, Python, React"
               />
             </div>
             <div className="sm:col-span-2 space-y-1">
-              <label className="text-[11px] font-mono text-[#77756F] uppercase">Target Competency</label>
-              <Input
+              <SkillAutocompleteInput
+                label="Target Competency"
                 value={toSkill}
-                onChange={(e) => setToSkill(e.target.value)}
+                onChange={(val) => setToSkill(val)}
                 placeholder="e.g. Microservices, Docker, Kubernetes"
               />
             </div>

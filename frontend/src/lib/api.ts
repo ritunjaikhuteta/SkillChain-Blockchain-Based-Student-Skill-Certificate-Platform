@@ -27,6 +27,12 @@ export interface SkillItem {
   createdAt: string;
 }
 
+export interface SkillSuggestion {
+  name: string;
+  category: string;
+  description?: string;
+}
+
 export interface ProjectItem {
   id: number;
   title: string;

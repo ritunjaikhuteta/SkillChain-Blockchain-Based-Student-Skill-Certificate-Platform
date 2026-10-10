@@ -18,4 +18,7 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     Optional<Skill> findByIdAndProfileId(Long id, Long profileId);
 
     long countByProfileId(Long profileId);
+
+    @org.springframework.data.jpa.repository.Query("SELECT DISTINCT s.name FROM Skill s WHERE LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%'))")
+    List<String> findDistinctSkillNamesByQuery(@org.springframework.data.repository.query.Param("query") String query);
 }

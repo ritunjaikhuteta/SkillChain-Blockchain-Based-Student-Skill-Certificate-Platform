@@ -28,6 +28,13 @@ public class SkillController {
         return ResponseEntity.ok(skills);
     }
 
+    @GetMapping("/suggest")
+    public ResponseEntity<List<com.skillchain.dto.SkillSuggestionDto>> suggestSkills(
+            @RequestParam(value = "q", defaultValue = "") String query
+    ) {
+        return ResponseEntity.ok(skillService.getSkillSuggestions(query));
+    }
+
     @PostMapping
     public ResponseEntity<SkillResponse> addSkill(
             @AuthenticationPrincipal UserDetails userDetails,

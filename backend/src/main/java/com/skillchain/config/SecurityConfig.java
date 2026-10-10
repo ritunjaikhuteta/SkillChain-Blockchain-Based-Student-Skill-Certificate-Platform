@@ -83,7 +83,7 @@ public class SecurityConfig {
                                 "/api/health",
                                 "/api/certificates/verify/**",
                                 "/api/files/avatars/**",
-                                "/api/skills/pathway",
+                                "/api/skills/**",
                                 "/error"
                         ).permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")

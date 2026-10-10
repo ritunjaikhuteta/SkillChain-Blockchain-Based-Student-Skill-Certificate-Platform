@@ -97,4 +97,29 @@ class SkillServiceTest {
 
         verify(skillRepository, times(1)).delete(skill);
     }
+
+    @Test
+    void getSkillSuggestions_StartsStartingWithJ() {
+        when(skillRepository.findDistinctSkillNamesByQuery("j")).thenReturn(List.of("Julia"));
+
+        List<com.skillchain.dto.SkillSuggestionDto> results = skillService.getSkillSuggestions("j");
+
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        // Verify all prefix matches start with j
+        assertTrue(results.stream().anyMatch(s -> s.getName().equalsIgnoreCase("Java")));
+        assertTrue(results.stream().anyMatch(s -> s.getName().equalsIgnoreCase("JavaScript")));
+        assertTrue(results.stream().anyMatch(s -> s.getName().equalsIgnoreCase("Jenkins")));
+
+        // First item must start with 'j' (case-insensitive)
+        assertTrue(results.get(0).getName().toLowerCase().startsWith("j"));
+    }
+
+    @Test
+    void getSkillSuggestions_EmptyQueryReturnsPopular() {
+        List<com.skillchain.dto.SkillSuggestionDto> results = skillService.getSkillSuggestions("");
+        assertNotNull(results);
+        assertFalse(results.isEmpty());
+        assertTrue(results.size() <= 12);
+    }
 }
