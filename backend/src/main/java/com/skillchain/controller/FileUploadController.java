@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/files")
+@SuppressWarnings("null")
 public class FileUploadController {
 
     private final CertificateService certificateService;
