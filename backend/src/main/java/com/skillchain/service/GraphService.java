@@ -18,8 +18,11 @@ import java.util.stream.Collectors;
 public class GraphService {
 
     private final StudentProfileRepository profileRepository;
+    @SuppressWarnings("unused")
     private final SkillRepository skillRepository;
+    @SuppressWarnings("unused")
     private final ProjectRepository projectRepository;
+    @SuppressWarnings("unused")
     private final CertificateRepository certificateRepository;
 
     // In-memory weighted skill graph

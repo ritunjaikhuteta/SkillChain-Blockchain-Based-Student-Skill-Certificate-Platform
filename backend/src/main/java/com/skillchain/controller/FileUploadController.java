@@ -26,7 +26,8 @@ public class FileUploadController {
     @GetMapping("/avatars/{userId}")
     public ResponseEntity<Resource> getAvatar(@PathVariable Long userId) {
         Resource resource = profileService.getAvatarResourceByUserId(userId);
-        String filename = resource.getFilename() != null ? resource.getFilename() : "avatar.png";
+        String rawFilename = (resource != null) ? resource.getFilename() : null;
+        String filename = (rawFilename != null) ? rawFilename : "avatar.png";
         MediaType mediaType = filename.toLowerCase().endsWith(".png") ? MediaType.IMAGE_PNG : MediaType.IMAGE_JPEG;
 
         return ResponseEntity.ok()

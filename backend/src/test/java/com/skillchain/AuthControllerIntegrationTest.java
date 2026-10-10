@@ -33,14 +33,13 @@ class AuthControllerIntegrationTest {
         String uniqueEmail = "integration_" + System.currentTimeMillis() + "@skillchain.com";
         RegisterRequest registerReq = new RegisterRequest("Test Student", uniqueEmail, "Password@123", Role.STUDENT);
 
-        MvcResult registerResult = mockMvc.perform(post("/api/auth/register")
+        mockMvc.perform(post("/api/auth/register")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(registerReq)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.token").isNotEmpty())
                 .andExpect(jsonPath("$.email").value(uniqueEmail))
-                .andExpect(jsonPath("$.role").value("STUDENT"))
-                .andReturn();
+                .andExpect(jsonPath("$.role").value("STUDENT"));
 
         // 2. Login with credentials
         AuthRequest loginReq = new AuthRequest(uniqueEmail, "Password@123");
