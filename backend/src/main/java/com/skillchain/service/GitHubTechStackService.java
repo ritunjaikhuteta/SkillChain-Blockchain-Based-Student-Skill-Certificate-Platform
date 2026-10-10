@@ -31,7 +31,7 @@ public class GitHubTechStackService {
     public GitHubTechStackService(ObjectMapper objectMapper) {
         this.objectMapper = objectMapper;
         this.httpClient = HttpClient.newBuilder()
-                .connectTimeout(Duration.ofSeconds(4))
+                .connectTimeout(Duration.ofSeconds(10))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build();
     }
@@ -88,7 +88,7 @@ public class GitHubTechStackService {
                     .uri(URI.create(url))
                     .header("Accept", "application/vnd.github.v3+json")
                     .header("User-Agent", "SkillChain-App")
-                    .timeout(Duration.ofSeconds(4))
+                    .timeout(Duration.ofSeconds(10))
                     .GET()
                     .build();
 
@@ -103,6 +103,15 @@ public class GitHubTechStackService {
                         technologies.add(mapCanonicalName(lang));
                     }
                 }
+                if (technologies.contains("Java")) {
+                    technologies.add("Spring Boot");
+                }
+                if (technologies.contains("TypeScript") || technologies.contains("JavaScript")) {
+                    technologies.add("React");
+                    technologies.add("Next.js");
+                }
+            } else if (response.statusCode() == 403) {
+                log.warn("GitHub API unauthenticated rate limit reached (HTTP 403) on backend for {}", repoCoordinates);
             }
         } catch (Exception e) {
             log.debug("Failed fetching languages for {}: {}", repoCoordinates, e.getMessage());
@@ -198,7 +207,8 @@ public class GitHubTechStackService {
 
     private String extractRepoCoordinates(String rawUrl) {
         if (rawUrl == null) return null;
-        Matcher matcher = GITHUB_URL_PATTERN.matcher(rawUrl.trim());
+        String cleaned = rawUrl.trim().replaceAll("[?#].*$", "").replaceAll("/+$", "");
+        Matcher matcher = GITHUB_URL_PATTERN.matcher(cleaned);
         if (matcher.find()) {
             String owner = matcher.group(1);
             String repo = matcher.group(2);
@@ -219,6 +229,8 @@ public class GitHubTechStackService {
 
     private String mapCanonicalName(String lang) {
         if ("Go".equalsIgnoreCase(lang)) return "Go / Golang";
+        if ("Dockerfile".equalsIgnoreCase(lang)) return "Docker";
+        if ("Shell".equalsIgnoreCase(lang)) return "Bash";
         return lang;
     }
 }

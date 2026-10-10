@@ -116,40 +116,55 @@ export default function StudentProjectsPage() {
 
         const langRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/languages`);
         if (!langRes.ok) return false;
-        const langData = await langRes.json();
-        const detected = Object.keys(langData).filter(
+        const langData: Record<string, number> = await langRes.json();
+        const rawKeys = Object.keys(langData).filter(
           (l) => !["Roff", "Makefile", "Batchfile"].includes(l)
         );
 
-        const techSet = new Set<string>(detected);
+        if (rawKeys.length === 0) return false;
 
-        // Check root manifests
+        const techSet = new Set<string>();
+        for (const k of rawKeys) {
+          if (k.toLowerCase() === "dockerfile") {
+            techSet.add("Docker");
+          } else if (k.toLowerCase() === "shell") {
+            techSet.add("Bash");
+          } else {
+            techSet.add(k);
+          }
+        }
+
+        // Contextual framework heuristics
+        if (techSet.has("Java")) {
+          techSet.add("Spring Boot");
+        }
+        if (techSet.has("TypeScript") || techSet.has("JavaScript")) {
+          techSet.add("React");
+          techSet.add("Next.js");
+        }
+
+        // Check root and subfolder manifests
         try {
           const contentsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
           if (contentsRes.ok) {
             const items = await contentsRes.json();
             if (Array.isArray(items)) {
               const fileNames = items.map((i: any) => (i.name || "").toLowerCase());
+              if (fileNames.includes("docker-compose.yml") || fileNames.includes("docker-compose.yaml")) {
+                techSet.add("Docker");
+              }
               if (fileNames.includes("pom.xml")) {
                 techSet.add("Java");
                 techSet.add("Spring Boot");
-              } else if (fileNames.includes("build.gradle") || fileNames.includes("build.gradle.kts")) {
+              }
+              if (fileNames.includes("build.gradle") || fileNames.includes("build.gradle.kts")) {
                 techSet.add("Gradle");
               }
               if (fileNames.includes("package.json")) {
                 techSet.add("Node.js");
               }
-              if (fileNames.includes("dockerfile") || fileNames.includes("docker-compose.yml")) {
-                techSet.add("Docker");
-              }
               if (fileNames.includes("requirements.txt") || fileNames.includes("pyproject.toml")) {
                 techSet.add("Python");
-              }
-              if (fileNames.includes("cargo.toml")) {
-                techSet.add("Rust");
-              }
-              if (fileNames.includes("go.mod")) {
-                techSet.add("Go / Golang");
               }
             }
           }
@@ -170,7 +185,11 @@ export default function StudentProjectsPage() {
     };
 
     try {
-      // 1. Try backend detection endpoint
+      // 1. Direct browser fetch FIRST (instant, CORS-friendly, uses user's IP avoiding cloud host rate limits)
+      const directSuccess = await detectDirectlyFromGitHub(url);
+      if (directSuccess) return;
+
+      // 2. Fall back to backend endpoint if direct browser fetch didn't return languages
       const res = await apiRequest<TechStackDetection>(
         `/student/projects/detect-tech-stack?url=${encodeURIComponent(url)}`
       ).catch(() => null);
@@ -184,22 +203,15 @@ export default function StudentProjectsPage() {
         return;
       }
 
-      // 2. Direct GitHub API fallback
-      const directSuccess = await detectDirectlyFromGitHub(url);
-      if (directSuccess) return;
-
       setDetectedStackMsg({
         type: "info",
         text: "Could not auto-detect languages for this repository. You can type them manually.",
       });
     } catch {
-      const directSuccess = await detectDirectlyFromGitHub(url);
-      if (!directSuccess) {
-        setDetectedStackMsg({
-          type: "info",
-          text: "Could not auto-detect languages for this repository. You can type them manually.",
-        });
-      }
+      setDetectedStackMsg({
+        type: "info",
+        text: "Could not auto-detect languages for this repository. You can type them manually.",
+      });
     } finally {
       setDetectingStack(false);
     }
