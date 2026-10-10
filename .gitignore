@@ -1,9 +1,21 @@
 # Root .gitignore for SkillChain Monorepo
 
-# Environment variables
+# Environment variables & secrets (never commit local environment files)
 .env
-.env.local
-.env.*.local
+.env.*
+*.env
+*.env.*
+!.env.example
+backend/.env
+backend/.env.*
+!backend/.env.example
+frontend/.env
+frontend/.env.*
+!frontend/.env.example
+
+# File uploads and local storage
+backend/uploads/
+uploads/
 
 # Operating System
 .DS_Store

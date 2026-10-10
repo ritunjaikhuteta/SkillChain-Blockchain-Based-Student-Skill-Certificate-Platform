@@ -1082,38 +1082,79 @@ Ensure your development environment meets the following requirements:
 ---
 
 ### Backend Setup & Execution
-1. Navigate to the backend directory:
+
+#### 1. Navigate to the Backend Directory
+```bash
+cd backend
+```
+
+#### 2. Configure Required Environment Variables
+SkillChain requires environment variables for database access, cryptographic JWT token signing, and initial administrator provisioning. **No hardcoded database passwords or default administrative credentials exist in the source code.**
+
+> [!IMPORTANT]
+> **Credential Security Notice:** Local `.env` files are strictly excluded from version control in `.gitignore`. Never commit passwords, private keys, or `.env` files to Git.
+
+Choose one of the two configuration options below:
+
+**Option A: Set environment variables directly in your terminal session (Recommended for local evaluation)**
+
+*Windows (PowerShell):*
+```powershell
+# Required MySQL database password
+$env:DB_PASSWORD="your_actual_mysql_password"
+
+# Required 256-bit JWT signing secret (generate with: openssl rand -hex 32)
+$env:JWT_SECRET="generate_a_random_64_character_hex_or_base64_string"
+
+# Initial Platform Administrator (provisioned on startup; no default password exists)
+$env:ADMIN_EMAIL="admin@skillchain.com"
+$env:ADMIN_PASSWORD="YourSecureAdminPassword123!"
+
+# Optional overrides (defaults to localhost:3306 and port 8080 if omitted)
+$env:DB_USERNAME="root"
+$env:PORT="8080"
+```
+
+*Linux / macOS (Bash / Zsh):*
+```bash
+# Required MySQL database password
+export DB_PASSWORD="your_actual_mysql_password"
+
+# Required 256-bit JWT signing secret (generate with: openssl rand -hex 32)
+export JWT_SECRET=$(openssl rand -hex 32)
+
+# Initial Platform Administrator (provisioned on startup; no default password exists)
+export ADMIN_EMAIL="admin@skillchain.com"
+export ADMIN_PASSWORD="YourSecureAdminPassword123!"
+
+# Optional overrides
+export DB_USERNAME="root"
+export PORT="8080"
+```
+
+**Option B: Create a local `.env` file from the provided template**
+1. Copy the template:
    ```bash
-   cd backend
+   cp .env.example .env
    ```
-2. Configure your database credentials and application secrets using environment variables (never commit plain-text credentials):
-   ```powershell
-   # Windows PowerShell:
-   $env:DB_URL="jdbc:mysql://localhost:3306/skillchain_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
-   $env:DB_USERNAME="your_db_username"
-   $env:DB_PASSWORD="your_secure_db_password"
-   $env:JWT_SECRET="your_secure_256_bit_secret_key"
-   $env:PORT="8080"
-   ```
-   ```bash
-   # Linux / macOS Bash:
-   export DB_URL="jdbc:mysql://localhost:3306/skillchain_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true"
-   export DB_USERNAME="your_db_username"
-   export DB_PASSWORD="your_secure_db_password"
-   export JWT_SECRET="your_secure_256_bit_secret_key"
-   export PORT="8080"
-   ```
-3. Build the application and run unit tests:
-   ```bash
-   mvn clean test
-   ```
-4. Launch the Spring Boot backend server:
-   ```bash
-   mvn spring-boot:run
-   ```
-   The backend starts at `http://localhost:8080`. On first startup, the database tables are created automatically by Hibernate, the genesis block is anchored, and the initial Administrator account is provisioned via the backend's `CommandLineRunner` bootstrapper in `SkillChainApplication.java`. Initial administrative credentials should be configured securely via environment variables or modified immediately upon first login.
-   - **Administrator Account Provisioning:** Bootstrapped on initial startup via `CommandLineRunner` in `SkillChainApplication.java`; update credentials immediately upon first deployment.
-   - **Role:** `ADMIN`
+2. Open `.env` in your text editor and populate `DB_PASSWORD`, `JWT_SECRET`, and `ADMIN_PASSWORD` with your secure credentials.
+3. The project `.gitignore` guarantees that `.env` and `.env.*` files are never tracked or committed to GitHub.
+
+#### 3. Build Application and Run Unit Tests
+Validate that the backend test suite passes:
+```bash
+mvn clean test
+```
+
+#### 4. Launch the Spring Boot Backend Server
+```bash
+mvn spring-boot:run
+```
+The backend initializes at `http://localhost:8080`.
+- **Database Schema:** Hibernate checks constraints and creates tables automatically on initial launch.
+- **Genesis Block:** `BlockchainService` initializes Block #0 (Genesis Block) if the ledger table is empty.
+- **Administrator Provisioning:** If `ADMIN_EMAIL` and `ADMIN_PASSWORD` are configured in the environment, the bootstrapper in `SkillChainApplication.java` hashes the password with BCrypt and provisions the administrator account. If not set, administrator auto-provisioning is skipped without printing any credentials.
+- **Role:** `ADMIN`
 
 ---
 
