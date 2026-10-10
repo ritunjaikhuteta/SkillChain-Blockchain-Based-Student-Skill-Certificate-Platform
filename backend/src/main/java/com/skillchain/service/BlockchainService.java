@@ -28,11 +28,20 @@ public class BlockchainService {
 
     private final BlockchainBlockRepository blockRepository;
     private final CertificateRepository certificateRepository;
+    private final FileStorageService fileStorageService;
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public BlockchainService(BlockchainBlockRepository blockRepository,
+                             CertificateRepository certificateRepository,
+                             FileStorageService fileStorageService) {
+        this.blockRepository = blockRepository;
+        this.certificateRepository = certificateRepository;
+        this.fileStorageService = fileStorageService;
+    }
 
     public BlockchainService(BlockchainBlockRepository blockRepository,
                              CertificateRepository certificateRepository) {
-        this.blockRepository = blockRepository;
-        this.certificateRepository = certificateRepository;
+        this(blockRepository, certificateRepository, null);
     }
 
     public static String sha256(String input) {
@@ -240,8 +249,9 @@ public class BlockchainService {
     }
 
     private CertificateVerificationDto evaluateBlockVerification(BlockchainBlock block) {
+        CertificateVerificationDto dto;
         if (block.isRevoked()) {
-            return CertificateVerificationDto.revoked(
+            dto = CertificateVerificationDto.revoked(
                     block.getBlockIndex(),
                     block.getHash(),
                     block.getCredentialId(),
@@ -250,45 +260,97 @@ public class BlockchainService {
                     block.getRevocationReason(),
                     block.getRevokedAt()
             );
+        } else {
+            // Verify cryptographic validity of this individual block's hash
+            String expectedHash = calculateBlockHash(
+                    block.getBlockIndex(),
+                    block.getPreviousHash(),
+                    block.getCertificateId(),
+                    block.getCredentialId(),
+                    block.getCertificateFingerprint(),
+                    block.getCertificateTitle(),
+                    block.getIssuingOrganization(),
+                    block.getStudentEmail(),
+                    block.getIssuerEmail(),
+                    block.getTimestamp()
+            );
+
+            if (!expectedHash.equalsIgnoreCase(block.getHash())) {
+                CertificateVerificationDto tamperedDto = new CertificateVerificationDto();
+                tamperedDto.setVerified(false);
+                tamperedDto.setStatus("TAMPERED");
+                tamperedDto.setMessage("Cryptographic hash mismatch: block data has been tampered with or modified.");
+                tamperedDto.setBlockIndex(block.getBlockIndex());
+                tamperedDto.setBlockHash(block.getHash());
+                tamperedDto.setCredentialId(block.getCredentialId());
+                tamperedDto.setCertificateTitle(block.getCertificateTitle());
+                tamperedDto.setIssuingOrganization(block.getIssuingOrganization());
+                tamperedDto.setRecordExists(true);
+                tamperedDto.setLedgerAnchored(false);
+                tamperedDto.setIssuerDirectlyAuthenticated(false);
+                return tamperedDto;
+            }
+
+            dto = CertificateVerificationDto.verified(
+                    block.getBlockIndex(),
+                    block.getHash(),
+                    block.getPreviousHash(),
+                    block.getCredentialId(),
+                    block.getCertificateTitle(),
+                    block.getIssuingOrganization(),
+                    block.getCertificateFingerprint(),
+                    block.getTimestamp()
+            );
         }
 
-        // Verify cryptographic validity of this individual block's hash
-        String expectedHash = calculateBlockHash(
-                block.getBlockIndex(),
-                block.getPreviousHash(),
-                block.getCertificateId(),
-                block.getCredentialId(),
-                block.getCertificateFingerprint(),
-                block.getCertificateTitle(),
-                block.getIssuingOrganization(),
-                block.getStudentEmail(),
-                block.getIssuerEmail(),
-                block.getTimestamp()
-        );
+        dto.setRecordExists(true);
+        dto.setLedgerAnchored(!block.isRevoked());
+        dto.setIssuerDirectlyAuthenticated(false);
+        dto.setVerificationNotice("SkillChain cryptographically verifies ledger existence and uploaded document SHA-256 hash integrity. This does not represent an independent direct validation by the external issuing organization.");
 
-        if (!expectedHash.equalsIgnoreCase(block.getHash())) {
-            CertificateVerificationDto tamperedDto = new CertificateVerificationDto();
-            tamperedDto.setVerified(false);
-            tamperedDto.setStatus("TAMPERED");
-            tamperedDto.setMessage("Cryptographic hash mismatch: block data has been tampered with or modified.");
-            tamperedDto.setBlockIndex(block.getBlockIndex());
-            tamperedDto.setBlockHash(block.getHash());
-            tamperedDto.setCredentialId(block.getCredentialId());
-            tamperedDto.setCertificateTitle(block.getCertificateTitle());
-            tamperedDto.setIssuingOrganization(block.getIssuingOrganization());
-            return tamperedDto;
+        // Check associated certificate and file document
+        if (block.getCertificateId() != null) {
+            certificateRepository.findById(block.getCertificateId()).ifPresent(cert -> {
+                dto.setSystemCredentialId(cert.isSystemCredentialId() || (cert.getCredentialId() != null && cert.getCredentialId().startsWith("SKC-")));
+                if (cert.getFileHash() != null) {
+                    dto.setHasDocument(true);
+                    dto.setFileName(cert.getFileName());
+                    dto.setFileHash(cert.getFileHash());
+                    dto.setFileSize(cert.getFileSize());
+                    dto.setContentType(cert.getContentType());
+                    if (fileStorageService != null && cert.getFileKey() != null) {
+                        dto.setFileIntegrityVerified(fileStorageService.verifyFileIntegrity(cert.getFileKey(), cert.getFileHash()));
+                    } else {
+                        dto.setFileIntegrityVerified(true);
+                    }
+                }
+            });
         }
 
-        return CertificateVerificationDto.verified(
-                block.getBlockIndex(),
-                block.getHash(),
-                block.getPreviousHash(),
-                block.getCredentialId(),
-                block.getCertificateTitle(),
-                block.getIssuingOrganization(),
-                block.getCertificateFingerprint(),
-                block.getTimestamp()
-        );
+        return dto;
+    }
+
+    @Transactional(readOnly = true)
+    public CertificateVerificationDto verifyByFile(org.springframework.web.multipart.MultipartFile file) {
+        if (file == null || file.isEmpty()) {
+            return CertificateVerificationDto.notFound("Uploaded verification file is empty");
+        }
+        try {
+            byte[] bytes = file.getBytes();
+            String hash = FileStorageService.calculateSha256(bytes);
+            Optional<Certificate> certOpt = certificateRepository.findFirstByFileHash(hash);
+            if (certOpt.isPresent()) {
+                Certificate cert = certOpt.get();
+                if (cert.getCredentialId() != null) {
+                    CertificateVerificationDto dto = verifyByCredentialId(cert.getCredentialId());
+                    dto.setFileIntegrityVerified(true);
+                    return dto;
+                }
+            }
+            return CertificateVerificationDto.notFound("Document with SHA-256 checksum '" + hash + "' is not registered on the ledger.");
+        } catch (Exception e) {
+            return CertificateVerificationDto.notFound("Failed to compute SHA-256 for uploaded document.");
+        }
     }
 
     @Transactional

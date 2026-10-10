@@ -28,12 +28,36 @@ public class CertificateController {
         return ResponseEntity.ok(certificates);
     }
 
-    @PostMapping
-    public ResponseEntity<CertificateResponse> addCertificate(
+    @PostMapping(consumes = org.springframework.http.MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<CertificateResponse> addCertificateJson(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody CertificateRequest request
     ) {
         CertificateResponse created = certificateService.addCertificate(userDetails.getUsername(), request);
+        return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    @PostMapping(consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CertificateResponse> addCertificateWithFile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @RequestParam("title") String title,
+            @RequestParam("issuingOrganization") String issuingOrganization,
+            @RequestParam("issueDate") String issueDate,
+            @RequestParam(value = "expirationDate", required = false) String expirationDate,
+            @RequestParam(value = "credentialId", required = false) String credentialId,
+            @RequestParam(value = "credentialUrl", required = false) String credentialUrl,
+            @RequestParam(value = "file", required = false) org.springframework.web.multipart.MultipartFile file
+    ) {
+        CertificateResponse created = certificateService.addCertificateWithFile(
+                userDetails.getUsername(),
+                title,
+                issuingOrganization,
+                issueDate,
+                expirationDate,
+                credentialId,
+                credentialUrl,
+                file
+        );
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 

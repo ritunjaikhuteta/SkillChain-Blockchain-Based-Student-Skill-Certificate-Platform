@@ -47,9 +47,10 @@ public class FileUploadController {
         Resource resource = certificateService.getCertificatePdfResource(certificateId, email, isStaffOrRecruiter);
         Certificate cert = certificateService.getCertificateById(certificateId);
         String downloadName = cert.getFileName() != null ? cert.getFileName() : "certificate.pdf";
+        MediaType mediaType = resolveMediaType(cert);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
+                .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + downloadName + "\"")
                 .body(resource);
     }
@@ -66,10 +67,23 @@ public class FileUploadController {
         Resource resource = certificateService.getCertificatePdfResource(certificateId, email, isStaffOrRecruiter);
         Certificate cert = certificateService.getCertificateById(certificateId);
         String previewName = cert.getFileName() != null ? cert.getFileName() : "certificate.pdf";
+        MediaType mediaType = resolveMediaType(cert);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.APPLICATION_PDF)
+                .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "inline; filename=\"" + previewName + "\"")
                 .body(resource);
+    }
+
+    private MediaType resolveMediaType(Certificate cert) {
+        if (cert.getContentType() != null && !cert.getContentType().isBlank()) {
+            try {
+                return MediaType.parseMediaType(cert.getContentType());
+            } catch (Exception ignored) {}
+        }
+        String fileName = cert.getFileName() != null ? cert.getFileName().toLowerCase() : "";
+        if (fileName.endsWith(".png")) return MediaType.IMAGE_PNG;
+        if (fileName.endsWith(".jpg") || fileName.endsWith(".jpeg")) return MediaType.IMAGE_JPEG;
+        return MediaType.APPLICATION_PDF;
     }
 }

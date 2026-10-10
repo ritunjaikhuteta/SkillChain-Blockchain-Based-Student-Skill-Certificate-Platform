@@ -22,6 +22,12 @@ public class CertificateResponse {
     private String fileName;
     private String fileHash;
     private Long fileSize;
+    private String contentType;
+    private String storageProvider;
+    @com.fasterxml.jackson.annotation.JsonProperty("isSystemCredentialId")
+    private boolean isSystemCredentialId;
+    private boolean hasDocument;
+    private String fileUrl;
     private LocalDateTime createdAt;
 
     public CertificateResponse() {
@@ -44,6 +50,11 @@ public class CertificateResponse {
         this.fileName = cert.getFileName();
         this.fileHash = cert.getFileHash();
         this.fileSize = cert.getFileSize();
+        this.contentType = cert.getContentType();
+        this.storageProvider = cert.getStorageProvider();
+        this.isSystemCredentialId = cert.isSystemCredentialId();
+        this.hasDocument = cert.getFileName() != null || cert.getFileHash() != null;
+        this.fileUrl = cert.getFileKey() != null ? "/api/files/certificates/" + cert.getId() + "/download" : null;
         this.createdAt = cert.getCreatedAt();
     }
 
@@ -173,6 +184,46 @@ public class CertificateResponse {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getStorageProvider() {
+        return storageProvider;
+    }
+
+    public void setStorageProvider(String storageProvider) {
+        this.storageProvider = storageProvider;
+    }
+
+    public boolean isSystemCredentialId() {
+        return isSystemCredentialId;
+    }
+
+    public void setSystemCredentialId(boolean systemCredentialId) {
+        isSystemCredentialId = systemCredentialId;
+    }
+
+    public boolean isHasDocument() {
+        return hasDocument;
+    }
+
+    public void setHasDocument(boolean hasDocument) {
+        this.hasDocument = hasDocument;
+    }
+
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
     }
 
     public LocalDateTime getCreatedAt() {

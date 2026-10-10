@@ -3,22 +3,30 @@ package com.skillchain.service;
 import com.skillchain.exception.BadRequestException;
 import com.skillchain.exception.ResourceNotFoundException;
 import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.S3ClientBuilder;
+import software.amazon.awssdk.services.s3.model.*;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.nio.charset.StandardCharsets;
+import java.net.URI;
 import java.nio.file.*;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.UUID;
 
 @Service
@@ -34,21 +42,103 @@ public class FileStorageService {
     private final Path certificateDir;
     private final Path avatarDir;
 
-    public FileStorageService(@Value("${app.upload.dir:./uploads}") String uploadDir) {
+    private final String s3Bucket;
+    private final String s3Region;
+    private final String s3AccessKey;
+    private final String s3SecretKey;
+    private final String s3Endpoint;
+    private final String storageProviderPreference;
+
+    private S3Client s3Client;
+    private boolean s3Active = false;
+
+    @Autowired
+    public FileStorageService(
+            @Value("${app.upload.dir:./uploads}") String uploadDir,
+            @Value("${app.storage.s3.bucket:}") String s3Bucket,
+            @Value("${app.storage.s3.region:us-east-1}") String s3Region,
+            @Value("${app.storage.s3.access-key:}") String s3AccessKey,
+            @Value("${app.storage.s3.secret-key:}") String s3SecretKey,
+            @Value("${app.storage.s3.endpoint:}") String s3Endpoint,
+            @Value("${app.storage.provider:auto}") String storageProviderPreference
+    ) {
         this.rootStorageLocation = Paths.get(uploadDir).toAbsolutePath().normalize();
         this.certificateDir = this.rootStorageLocation.resolve("certificates").normalize();
         this.avatarDir = this.rootStorageLocation.resolve("avatars").normalize();
+
+        this.s3Bucket = s3Bucket != null ? s3Bucket.trim() : "";
+        this.s3Region = (s3Region != null && !s3Region.isBlank()) ? s3Region.trim() : "us-east-1";
+        this.s3AccessKey = s3AccessKey != null ? s3AccessKey.trim() : "";
+        this.s3SecretKey = s3SecretKey != null ? s3SecretKey.trim() : "";
+        this.s3Endpoint = s3Endpoint != null ? s3Endpoint.trim() : "";
+        this.storageProviderPreference = storageProviderPreference != null ? storageProviderPreference.trim() : "auto";
+    }
+
+    public FileStorageService(String uploadDir) {
+        this(uploadDir, null, "us-east-1", null, null, null, "auto");
     }
 
     @PostConstruct
     public void init() {
+        // 1. Initialize local directories (fallback and temp scratch space)
         try {
             Files.createDirectories(this.certificateDir);
             Files.createDirectories(this.avatarDir);
-            log.info("Initialized file storage at: {}", this.rootStorageLocation);
         } catch (IOException e) {
-            throw new IllegalStateException("Could not initialize storage directory", e);
+            throw new IllegalStateException("Could not initialize local storage directory", e);
         }
+
+        // 2. Initialize S3 client if credentials and bucket are provided
+        boolean hasS3Credentials = !s3Bucket.isBlank() && !s3AccessKey.isBlank() && !s3SecretKey.isBlank();
+        boolean forceLocal = "local".equalsIgnoreCase(storageProviderPreference);
+
+        if (hasS3Credentials && !forceLocal) {
+            try {
+                S3ClientBuilder builder = S3Client.builder()
+                        .region(Region.of(s3Region))
+                        .credentialsProvider(StaticCredentialsProvider.create(
+                                AwsBasicCredentials.create(s3AccessKey, s3SecretKey)
+                        ));
+
+                if (!s3Endpoint.isBlank()) {
+                    builder.endpointOverride(URI.create(s3Endpoint));
+                    builder.forcePathStyle(true); // Needed for MinIO, Cloudflare R2, Supabase
+                }
+
+                this.s3Client = builder.build();
+                this.s3Active = true;
+                log.info("Initialized persistent S3-compatible cloud storage with bucket: '{}' in region: '{}'", s3Bucket, s3Region);
+            } catch (Exception e) {
+                this.s3Active = false;
+                log.error("Failed to initialize S3 storage client. Falling back to local storage: {}", e.getMessage(), e);
+            }
+        } else {
+            this.s3Active = false;
+            log.info("S3 cloud storage credentials not fully configured (bucket='{}', accessKeySet={}). " +
+                    "Using local filesystem storage at: {}. " +
+                    "(NOTE FOR RENDER DEPLOYMENTS: Render local disk is ephemeral across redeploys. " +
+                    "Set S3_BUCKET, S3_ACCESS_KEY, S3_SECRET_KEY, and S3_REGION in Render environment variables for persistent object storage.)",
+                    s3Bucket, !s3AccessKey.isBlank(), this.rootStorageLocation);
+        }
+    }
+
+    @PreDestroy
+    public void cleanup() {
+        if (s3Client != null) {
+            try {
+                s3Client.close();
+            } catch (Exception e) {
+                log.warn("Error closing S3 client: {}", e.getMessage());
+            }
+        }
+    }
+
+    public boolean isS3Active() {
+        return s3Active && s3Client != null;
+    }
+
+    public String getActiveStorageProvider() {
+        return isS3Active() ? "S3" : "LOCAL";
     }
 
     public static class StoredFileMeta {
@@ -57,13 +147,19 @@ public class FileStorageService {
         private final String fileHash;
         private final long fileSize;
         private final String contentType;
+        private final String storageProvider;
 
-        public StoredFileMeta(String fileKey, String originalFilename, String fileHash, long fileSize, String contentType) {
+        public StoredFileMeta(String fileKey, String originalFilename, String fileHash, long fileSize, String contentType, String storageProvider) {
             this.fileKey = fileKey;
             this.originalFilename = originalFilename;
             this.fileHash = fileHash;
             this.fileSize = fileSize;
             this.contentType = contentType;
+            this.storageProvider = storageProvider;
+        }
+
+        public StoredFileMeta(String fileKey, String originalFilename, String fileHash, long fileSize, String contentType) {
+            this(fileKey, originalFilename, fileHash, fileSize, contentType, "LOCAL");
         }
 
         public String getFileKey() {
@@ -85,14 +181,22 @@ public class FileStorageService {
         public String getContentType() {
             return contentType;
         }
+
+        public String getStorageProvider() {
+            return storageProvider;
+        }
     }
 
-    public StoredFileMeta storeCertificatePdf(MultipartFile file) {
+    /**
+     * Stores a certificate file (PDF, PNG, JPG, or JPEG) up to 5MB.
+     * Content sniffing inspects magic bytes regardless of file extension.
+     */
+    public StoredFileMeta storeCertificateFile(MultipartFile file) {
         validateFileNotEmpty(file);
 
-        // Maximum 10MB
-        if (file.getSize() > 10 * 1024 * 1024) {
-            throw new BadRequestException("Certificate file exceeds maximum limit of 10MB");
+        // Maximum 5MB limit
+        if (file.getSize() > 5 * 1024 * 1024) {
+            throw new BadRequestException("Certificate file exceeds maximum limit of 5MB");
         }
 
         byte[] fileBytes;
@@ -102,30 +206,59 @@ public class FileStorageService {
             throw new BadRequestException("Failed to read uploaded certificate bytes");
         }
 
-        // Validate PDF Magic Bytes (%PDF-)
-        if (!isPdf(fileBytes)) {
-            throw new BadRequestException("Invalid file content. Uploaded file is not a valid PDF document.");
+        String contentType;
+        String extension;
+
+        if (isPdf(fileBytes)) {
+            contentType = "application/pdf";
+            extension = ".pdf";
+        } else if (isPng(fileBytes)) {
+            contentType = "image/png";
+            extension = ".png";
+        } else if (isJpeg(fileBytes)) {
+            contentType = "image/jpeg";
+            extension = ".jpg";
+        } else {
+            String origExt = getFileExtension(file.getOriginalFilename()).toLowerCase();
+            if (".pdf".equals(origExt)) {
+                throw new BadRequestException("Invalid file content. Uploaded file is not a valid PDF document.");
+            }
+            throw new BadRequestException("Unsupported file format. Only PDF, PNG, JPG, and JPEG documents are allowed.");
         }
 
         String originalFilename = sanitizeFilename(file.getOriginalFilename());
-        String extension = getFileExtension(originalFilename);
-        if (!".pdf".equalsIgnoreCase(extension)) {
-            extension = ".pdf";
+        String origExt = getFileExtension(originalFilename).toLowerCase();
+
+        // Security check: ensure extension doesn't contradict verified format
+        if (!origExt.isEmpty()) {
+            boolean matches = switch (contentType) {
+                case "application/pdf" -> origExt.equals(".pdf");
+                case "image/png" -> origExt.equals(".png");
+                case "image/jpeg" -> origExt.equals(".jpg") || origExt.equals(".jpeg");
+                default -> false;
+            };
+            if (!matches) {
+                throw new BadRequestException("File extension does not match verified " + contentType + " content.");
+            }
         }
 
         String fileKey = "cert-" + UUID.randomUUID() + extension;
-        Path destination = this.certificateDir.resolve(fileKey).normalize();
-
-        preventPathTraversal(destination, this.certificateDir);
-
-        try {
-            Files.write(destination, fileBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-        } catch (IOException e) {
-            throw new IllegalStateException("Failed to persist certificate file to disk", e);
-        }
-
         String sha256 = calculateSha256(fileBytes);
-        return new StoredFileMeta(fileKey, originalFilename, sha256, fileBytes.length, "application/pdf");
+
+        String providerUsed = saveCertificateBytes(fileKey, fileBytes, contentType);
+
+        return new StoredFileMeta(fileKey, originalFilename, sha256, fileBytes.length, contentType, providerUsed);
+    }
+
+    /**
+     * Backward-compatible helper that requires PDF content.
+     */
+    public StoredFileMeta storeCertificatePdf(MultipartFile file) {
+        StoredFileMeta meta = storeCertificateFile(file);
+        if (!"application/pdf".equals(meta.getContentType())) {
+            throw new BadRequestException("Invalid file content. Uploaded file is not a valid PDF document.");
+        }
+        return meta;
     }
 
     public StoredFileMeta storeAvatarImage(MultipartFile file) {
@@ -169,22 +302,94 @@ public class FileStorageService {
         }
 
         String sha256 = calculateSha256(fileBytes);
-        return new StoredFileMeta(fileKey, originalFilename, sha256, fileBytes.length, contentType);
+        return new StoredFileMeta(fileKey, originalFilename, sha256, fileBytes.length, contentType, "LOCAL");
+    }
+
+    private String saveCertificateBytes(String fileKey, byte[] fileBytes, String contentType) {
+        if (isS3Active()) {
+            try {
+                PutObjectRequest putReq = PutObjectRequest.builder()
+                        .bucket(s3Bucket)
+                        .key("certificates/" + fileKey)
+                        .contentType(contentType)
+                        .build();
+                s3Client.putObject(putReq, RequestBody.fromBytes(fileBytes));
+                return "S3";
+            } catch (Exception e) {
+                log.error("Failed to upload to S3, falling back to local file storage: {}", e.getMessage(), e);
+            }
+        }
+
+        // Local storage fallback
+        Path destination = this.certificateDir.resolve(fileKey).normalize();
+        preventPathTraversal(destination, this.certificateDir);
+
+        try {
+            Files.write(destination, fileBytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (IOException e) {
+            throw new IllegalStateException("Failed to persist certificate file to disk", e);
+        }
+        return "LOCAL";
+    }
+
+    public Resource loadCertificateDocumentAsResource(String fileKey) {
+        byte[] bytes = loadCertificateDocumentBytes(fileKey);
+        return new ByteArrayResource(bytes) {
+            @Override
+            public String getFilename() {
+                return fileKey;
+            }
+        };
     }
 
     public Resource loadCertificatePdfAsResource(String fileKey) {
+        return loadCertificateDocumentAsResource(fileKey);
+    }
+
+    public byte[] loadCertificateDocumentBytes(String fileKey) {
+        if (fileKey == null || fileKey.isBlank()) {
+            throw new BadRequestException("File key cannot be blank");
+        }
+
+        if (isS3Active()) {
+            try {
+                GetObjectRequest getReq = GetObjectRequest.builder()
+                        .bucket(s3Bucket)
+                        .key("certificates/" + fileKey)
+                        .build();
+                return s3Client.getObjectAsBytes(getReq).asByteArray();
+            } catch (NoSuchKeyException e) {
+                log.warn("File not found on S3: {}, checking local storage fallback", fileKey);
+            } catch (Exception e) {
+                log.warn("S3 retrieval error for {}: {}, checking local fallback", fileKey, e.getMessage());
+            }
+        }
+
         Path filePath = this.certificateDir.resolve(fileKey).normalize();
         preventPathTraversal(filePath, this.certificateDir);
 
         try {
-            Resource resource = new UrlResource(filePath.toUri());
-            if (resource.exists() && resource.isReadable()) {
-                return resource;
+            if (Files.exists(filePath) && Files.isReadable(filePath)) {
+                return Files.readAllBytes(filePath);
             } else {
                 throw new ResourceNotFoundException("Certificate document file not found: " + fileKey);
             }
-        } catch (MalformedURLException e) {
-            throw new ResourceNotFoundException("Invalid file URL: " + fileKey);
+        } catch (IOException e) {
+            throw new ResourceNotFoundException("Error reading certificate file: " + fileKey);
+        }
+    }
+
+    public boolean verifyFileIntegrity(String fileKey, String expectedHash) {
+        if (fileKey == null || fileKey.isBlank() || expectedHash == null || expectedHash.isBlank()) {
+            return false;
+        }
+        try {
+            byte[] bytes = loadCertificateDocumentBytes(fileKey);
+            String recalculated = calculateSha256(bytes);
+            return recalculated.equalsIgnoreCase(expectedHash.trim());
+        } catch (Exception e) {
+            log.warn("Could not verify file integrity for key {}: {}", fileKey, e.getMessage());
+            return false;
         }
     }
 
@@ -206,12 +411,25 @@ public class FileStorageService {
 
     public void deleteCertificateFile(String fileKey) {
         if (fileKey == null || fileKey.isBlank()) return;
+
+        if (isS3Active()) {
+            try {
+                DeleteObjectRequest delReq = DeleteObjectRequest.builder()
+                        .bucket(s3Bucket)
+                        .key("certificates/" + fileKey)
+                        .build();
+                s3Client.deleteObject(delReq);
+            } catch (Exception e) {
+                log.warn("Could not delete S3 object: {}", fileKey, e);
+            }
+        }
+
         Path filePath = this.certificateDir.resolve(fileKey).normalize();
-        preventPathTraversal(filePath, this.certificateDir);
         try {
+            preventPathTraversal(filePath, this.certificateDir);
             Files.deleteIfExists(filePath);
-        } catch (IOException e) {
-            log.warn("Could not delete certificate file: {}", fileKey, e);
+        } catch (Exception e) {
+            log.warn("Could not delete local certificate file: {}", fileKey, e);
         }
     }
 

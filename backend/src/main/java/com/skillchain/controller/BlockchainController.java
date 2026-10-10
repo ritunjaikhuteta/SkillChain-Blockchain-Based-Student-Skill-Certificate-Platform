@@ -50,6 +50,14 @@ public class BlockchainController {
         return ResponseEntity.ok(result);
     }
 
+    @PostMapping(value = "/api/certificates/verify/file", consumes = org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CertificateVerificationDto> verifyCertificateByFile(
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file
+    ) {
+        CertificateVerificationDto result = blockchainService.verifyByFile(file);
+        return ResponseEntity.ok(result);
+    }
+
     // --- Admin Endpoints (Require ROLE_ADMIN) ---
 
     @GetMapping("/api/admin/blockchain/status")

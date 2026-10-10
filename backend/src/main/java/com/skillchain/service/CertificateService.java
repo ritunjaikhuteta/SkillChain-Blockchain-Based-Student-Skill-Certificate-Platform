@@ -8,10 +8,13 @@ import com.skillchain.model.StudentProfile;
 import com.skillchain.model.User;
 import com.skillchain.repository.CertificateRepository;
 import com.skillchain.repository.UserRepository;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,17 +57,90 @@ public class CertificateService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
         StudentProfile profile = profileService.getOrCreateProfileForUser(user);
 
+        boolean isSystemId = false;
+        String credId = request.getCredentialId() != null ? request.getCredentialId().trim() : null;
+        if (credId == null || credId.isBlank()) {
+            credId = "SKC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            isSystemId = true;
+        }
+
         Certificate certificate = new Certificate(
                 profile,
                 request.getTitle().trim(),
                 request.getIssuingOrganization().trim(),
                 request.getIssueDate().trim(),
                 request.getExpirationDate() != null ? request.getExpirationDate().trim() : null,
-                request.getCredentialId() != null ? request.getCredentialId().trim() : null,
+                credId,
                 request.getCredentialUrl() != null ? request.getCredentialUrl().trim() : null
         );
+        certificate.setSystemCredentialId(isSystemId);
 
         Certificate saved = certificateRepository.save(certificate);
+
+        // Auto-anchor to blockchain ledger
+        try {
+            blockchainService.anchorCertificate(saved.getId(), email);
+            saved = certificateRepository.findById(saved.getId()).orElse(saved);
+        } catch (Exception ex) {
+            // Proceed safely
+        }
+
+        return new CertificateResponse(saved);
+    }
+
+    @Transactional
+    public CertificateResponse addCertificateWithFile(
+            String email,
+            String title,
+            String issuingOrganization,
+            String issueDate,
+            String expirationDate,
+            String credentialId,
+            String credentialUrl,
+            MultipartFile file
+    ) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
+        StudentProfile profile = profileService.getOrCreateProfileForUser(user);
+
+        boolean isSystemId = false;
+        String credId = credentialId != null ? credentialId.trim() : null;
+        if (credId == null || credId.isBlank()) {
+            credId = "SKC-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+            isSystemId = true;
+        }
+
+        Certificate certificate = new Certificate(
+                profile,
+                title.trim(),
+                issuingOrganization.trim(),
+                issueDate.trim(),
+                expirationDate != null && !expirationDate.isBlank() ? expirationDate.trim() : null,
+                credId,
+                credentialUrl != null && !credentialUrl.isBlank() ? credentialUrl.trim() : null
+        );
+        certificate.setSystemCredentialId(isSystemId);
+
+        if (file != null && !file.isEmpty()) {
+            FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificateFile(file);
+            certificate.setFileKey(meta.getFileKey());
+            certificate.setFileName(meta.getOriginalFilename());
+            certificate.setFileHash(meta.getFileHash());
+            certificate.setFileSize(meta.getFileSize());
+            certificate.setContentType(meta.getContentType());
+            certificate.setStorageProvider(meta.getStorageProvider());
+        }
+
+        Certificate saved = certificateRepository.save(certificate);
+
+        // Auto-anchor to blockchain ledger
+        try {
+            blockchainService.anchorCertificate(saved.getId(), email);
+            saved = certificateRepository.findById(saved.getId()).orElse(saved);
+        } catch (Exception ex) {
+            // Proceed safely
+        }
+
         return new CertificateResponse(saved);
     }
 
@@ -104,7 +180,7 @@ public class CertificateService {
     }
 
     @Transactional
-    public CertificateResponse uploadCertificateDocument(String email, Long certificateId, org.springframework.web.multipart.MultipartFile file) {
+    public CertificateResponse uploadCertificateDocument(String email, Long certificateId, MultipartFile file) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
         StudentProfile profile = profileService.getOrCreateProfileForUser(user);
@@ -121,11 +197,13 @@ public class CertificateService {
             fileStorageService.deleteCertificateFile(certificate.getFileKey());
         }
 
-        FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificatePdf(file);
+        FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificateFile(file);
         certificate.setFileKey(meta.getFileKey());
         certificate.setFileName(meta.getOriginalFilename());
         certificate.setFileHash(meta.getFileHash());
         certificate.setFileSize(meta.getFileSize());
+        certificate.setContentType(meta.getContentType());
+        certificate.setStorageProvider(meta.getStorageProvider());
 
         Certificate saved = certificateRepository.save(certificate);
 
@@ -149,7 +227,7 @@ public class CertificateService {
     }
 
     @Transactional(readOnly = true)
-    public org.springframework.core.io.Resource getCertificatePdfResource(Long certificateId, String userEmail, boolean isStaffOrRecruiter) {
+    public Resource getCertificateDocumentResource(Long certificateId, String userEmail, boolean isStaffOrRecruiter) {
         Certificate certificate = certificateRepository.findById(certificateId)
                 .orElseThrow(() -> new ResourceNotFoundException("Certificate not found with id: " + certificateId));
 
@@ -166,6 +244,11 @@ public class CertificateService {
             throw new ResourceNotFoundException("No document file associated with this certificate");
         }
 
-        return fileStorageService.loadCertificatePdfAsResource(certificate.getFileKey());
+        return fileStorageService.loadCertificateDocumentAsResource(certificate.getFileKey());
+    }
+
+    @Transactional(readOnly = true)
+    public Resource getCertificatePdfResource(Long certificateId, String userEmail, boolean isStaffOrRecruiter) {
+        return getCertificateDocumentResource(certificateId, userEmail, isStaffOrRecruiter);
     }
 }

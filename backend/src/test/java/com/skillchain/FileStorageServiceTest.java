@@ -107,10 +107,10 @@ class FileStorageServiceTest {
     }
 
     @Test
-    @DisplayName("Oversized certificate file (>10MB) is rejected")
+    @DisplayName("Oversized certificate file (>5MB) is rejected")
     void testOversizedFileRejected() {
         byte[] header = "%PDF-".getBytes();
-        byte[] oversized = new byte[11 * 1024 * 1024];
+        byte[] oversized = new byte[6 * 1024 * 1024];
         System.arraycopy(header, 0, oversized, 0, header.length);
 
         MockMultipartFile file = new MockMultipartFile(
@@ -118,8 +118,70 @@ class FileStorageServiceTest {
         );
 
         BadRequestException ex = assertThrows(BadRequestException.class, () ->
-                fileStorageService.storeCertificatePdf(file)
+                fileStorageService.storeCertificateFile(file)
         );
-        assertTrue(ex.getMessage().contains("exceeds maximum limit of 10MB"));
+        assertTrue(ex.getMessage().contains("exceeds maximum limit of 5MB"));
+    }
+
+    @Test
+    @DisplayName("Valid PNG certificate image is accepted and hashed")
+    void testStoreValidPngCertificate() {
+        byte[] pngContent = new byte[]{(byte) 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0x00, 0x01};
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "certificate.png", "image/png", pngContent
+        );
+
+        FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificateFile(file);
+        assertNotNull(meta);
+        assertEquals("image/png", meta.getContentType());
+        assertTrue(meta.getFileKey().endsWith(".png"));
+        assertNotNull(meta.getFileHash());
+        assertEquals(64, meta.getFileHash().length());
+    }
+
+    @Test
+    @DisplayName("Valid JPEG certificate image is accepted and hashed")
+    void testStoreValidJpegCertificate() {
+        byte[] jpegContent = new byte[]{(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0x00, 0x10};
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "certificate.jpg", "image/jpeg", jpegContent
+        );
+
+        FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificateFile(file);
+        assertNotNull(meta);
+        assertEquals("image/jpeg", meta.getContentType());
+        assertTrue(meta.getFileKey().endsWith(".jpg"));
+        assertNotNull(meta.getFileHash());
+    }
+
+    @Test
+    @DisplayName("File extension contradicting detected magic bytes is rejected")
+    void testRejectMismatchedExtension() {
+        byte[] pdfContent = "%PDF-1.4 sample".getBytes();
+        // File has PDF magic bytes but forged extension .png
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "forged.png", "image/png", pdfContent
+        );
+
+        BadRequestException ex = assertThrows(BadRequestException.class, () ->
+                fileStorageService.storeCertificateFile(file)
+        );
+        assertTrue(ex.getMessage().contains("File extension does not match"));
+    }
+
+    @Test
+    @DisplayName("File integrity verification returns true for unaltered content and false for modified")
+    void testVerifyFileIntegrity() {
+        byte[] pdfContent = "%PDF-1.4 official credential document".getBytes();
+        MockMultipartFile file = new MockMultipartFile(
+                "file", "audit.pdf", "application/pdf", pdfContent
+        );
+
+        FileStorageService.StoredFileMeta meta = fileStorageService.storeCertificateFile(file);
+        assertTrue(fileStorageService.verifyFileIntegrity(meta.getFileKey(), meta.getFileHash()));
+
+        // Corrupted hash
+        String alteredHash = meta.getFileHash().substring(0, 63) + (meta.getFileHash().endsWith("0") ? "1" : "0");
+        assertFalse(fileStorageService.verifyFileIntegrity(meta.getFileKey(), alteredHash));
     }
 }

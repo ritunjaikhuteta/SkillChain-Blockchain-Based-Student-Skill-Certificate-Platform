@@ -57,6 +57,11 @@ export interface CertificateItem {
   fileName?: string;
   fileHash?: string;
   fileSize?: number;
+  contentType?: string;
+  storageProvider?: string;
+  isSystemCredentialId?: boolean;
+  hasDocument?: boolean;
+  fileUrl?: string;
   createdAt: string;
 }
 
@@ -153,6 +158,18 @@ export interface CertificateVerificationDto {
   revoked: boolean;
   revocationReason?: string | null;
   revokedAt?: string | null;
+  // File and verification dimensions
+  hasDocument?: boolean;
+  fileName?: string | null;
+  fileHash?: string | null;
+  fileSize?: number | null;
+  contentType?: string | null;
+  fileIntegrityVerified?: boolean;
+  recordExists?: boolean;
+  ledgerAnchored?: boolean;
+  issuerDirectlyAuthenticated?: boolean;
+  isSystemCredentialId?: boolean;
+  verificationNotice?: string | null;
 }
 
 export interface SkillRecommendationDto {

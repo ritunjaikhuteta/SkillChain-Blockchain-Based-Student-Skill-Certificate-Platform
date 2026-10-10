@@ -17,5 +17,9 @@ public interface CertificateRepository extends JpaRepository<Certificate, Long> 
 
     Optional<Certificate> findByIdAndProfileId(Long id, Long profileId);
 
+    Optional<Certificate> findByCredentialId(String credentialId);
+
+    Optional<Certificate> findFirstByFileHash(String fileHash);
+
     long countByProfileId(Long profileId);
 }

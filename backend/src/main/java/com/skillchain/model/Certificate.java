@@ -63,6 +63,18 @@ public class Certificate {
 
     private Long fileSize;
 
+    @Column(length = 100)
+    private String contentType;
+
+    @Column(length = 500)
+    private String fileUrl;
+
+    @Column(length = 30)
+    private String storageProvider;
+
+    @Column(nullable = false)
+    private boolean isSystemCredentialId = false;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -229,6 +241,38 @@ public class Certificate {
 
     public void setFileSize(Long fileSize) {
         this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public String getFileUrl() {
+        return fileUrl;
+    }
+
+    public void setFileUrl(String fileUrl) {
+        this.fileUrl = fileUrl;
+    }
+
+    public String getStorageProvider() {
+        return storageProvider;
+    }
+
+    public void setStorageProvider(String storageProvider) {
+        this.storageProvider = storageProvider;
+    }
+
+    public boolean isSystemCredentialId() {
+        return isSystemCredentialId;
+    }
+
+    public void setSystemCredentialId(boolean systemCredentialId) {
+        isSystemCredentialId = systemCredentialId;
     }
 
     public LocalDateTime getCreatedAt() {

@@ -19,6 +19,20 @@ public class CertificateVerificationDto {
     private String revocationReason;
     private LocalDateTime revokedAt;
 
+    // Document and Multi-Dimensional Verification
+    private boolean hasDocument = false;
+    private String fileName;
+    private String fileHash;
+    private Long fileSize;
+    private String contentType;
+    private Boolean fileIntegrityVerified;
+    private boolean recordExists = false;
+    private boolean ledgerAnchored = false;
+    private boolean issuerDirectlyAuthenticated = false;
+    @com.fasterxml.jackson.annotation.JsonProperty("isSystemCredentialId")
+    private boolean isSystemCredentialId = false;
+    private String verificationNotice;
+
     public CertificateVerificationDto() {
     }
 
@@ -176,5 +190,93 @@ public class CertificateVerificationDto {
 
     public void setRevokedAt(LocalDateTime revokedAt) {
         this.revokedAt = revokedAt;
+    }
+
+    public boolean isHasDocument() {
+        return hasDocument;
+    }
+
+    public void setHasDocument(boolean hasDocument) {
+        this.hasDocument = hasDocument;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileHash() {
+        return fileHash;
+    }
+
+    public void setFileHash(String fileHash) {
+        this.fileHash = fileHash;
+    }
+
+    public Long getFileSize() {
+        return fileSize;
+    }
+
+    public void setFileSize(Long fileSize) {
+        this.fileSize = fileSize;
+    }
+
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
+
+    public Boolean getFileIntegrityVerified() {
+        return fileIntegrityVerified;
+    }
+
+    public void setFileIntegrityVerified(Boolean fileIntegrityVerified) {
+        this.fileIntegrityVerified = fileIntegrityVerified;
+    }
+
+    public boolean isRecordExists() {
+        return recordExists;
+    }
+
+    public void setRecordExists(boolean recordExists) {
+        this.recordExists = recordExists;
+    }
+
+    public boolean isLedgerAnchored() {
+        return ledgerAnchored;
+    }
+
+    public void setLedgerAnchored(boolean ledgerAnchored) {
+        this.ledgerAnchored = ledgerAnchored;
+    }
+
+    public boolean isIssuerDirectlyAuthenticated() {
+        return issuerDirectlyAuthenticated;
+    }
+
+    public void setIssuerDirectlyAuthenticated(boolean issuerDirectlyAuthenticated) {
+        this.issuerDirectlyAuthenticated = issuerDirectlyAuthenticated;
+    }
+
+    public boolean isSystemCredentialId() {
+        return isSystemCredentialId;
+    }
+
+    public void setSystemCredentialId(boolean systemCredentialId) {
+        isSystemCredentialId = systemCredentialId;
+    }
+
+    public String getVerificationNotice() {
+        return verificationNotice;
+    }
+
+    public void setVerificationNotice(String verificationNotice) {
+        this.verificationNotice = verificationNotice;
     }
 }
