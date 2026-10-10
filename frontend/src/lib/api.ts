@@ -33,6 +33,14 @@ export interface SkillSuggestion {
   description?: string;
 }
 
+export interface TechStackDetection {
+  techStack: string;
+  technologies: string[];
+  detected: boolean;
+  repository?: string;
+  message?: string;
+}
+
 export interface ProjectItem {
   id: number;
   title: string;

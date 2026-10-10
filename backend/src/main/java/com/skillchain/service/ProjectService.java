@@ -20,15 +20,18 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final StudentProfileService profileService;
     private final UserRepository userRepository;
+    private final GitHubTechStackService gitHubTechStackService;
 
     public ProjectService(
             ProjectRepository projectRepository,
             StudentProfileService profileService,
-            UserRepository userRepository
+            UserRepository userRepository,
+            GitHubTechStackService gitHubTechStackService
     ) {
         this.projectRepository = projectRepository;
         this.profileService = profileService;
         this.userRepository = userRepository;
+        this.gitHubTechStackService = gitHubTechStackService;
     }
 
     @Transactional(readOnly = true)
@@ -48,11 +51,13 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
         StudentProfile profile = profileService.getOrCreateProfileForUser(user);
 
+        String stack = resolveTechStack(request.getTechStack(), request.getGithubUrl());
+
         Project project = new Project(
                 profile,
                 request.getTitle().trim(),
                 request.getDescription().trim(),
-                request.getTechStack() != null ? request.getTechStack().trim() : null,
+                stack,
                 request.getLiveDemoUrl() != null ? request.getLiveDemoUrl().trim() : null,
                 request.getGithubUrl() != null ? request.getGithubUrl().trim() : null,
                 request.getStartDate() != null ? request.getStartDate().trim() : null,
@@ -73,9 +78,11 @@ public class ProjectService {
         Project project = projectRepository.findByIdAndProfileId(projectId, profile.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
 
+        String stack = resolveTechStack(request.getTechStack(), request.getGithubUrl());
+
         project.setTitle(request.getTitle().trim());
         project.setDescription(request.getDescription().trim());
-        project.setTechStack(request.getTechStack() != null ? request.getTechStack().trim() : null);
+        project.setTechStack(stack);
         project.setLiveDemoUrl(request.getLiveDemoUrl() != null ? request.getLiveDemoUrl().trim() : null);
         project.setGithubUrl(request.getGithubUrl() != null ? request.getGithubUrl().trim() : null);
         project.setStartDate(request.getStartDate() != null ? request.getStartDate().trim() : null);
@@ -84,6 +91,23 @@ public class ProjectService {
 
         Project saved = projectRepository.save(project);
         return new ProjectResponse(saved);
+    }
+
+    public com.skillchain.dto.TechStackDetectionDto detectTechStackFromGitHub(String githubUrl) {
+        return gitHubTechStackService.detectTechStack(githubUrl);
+    }
+
+    private String resolveTechStack(String providedStack, String githubUrl) {
+        if (providedStack != null && !providedStack.trim().isBlank()) {
+            return providedStack.trim();
+        }
+        if (githubUrl != null && !githubUrl.trim().isBlank()) {
+            com.skillchain.dto.TechStackDetectionDto detected = gitHubTechStackService.detectTechStack(githubUrl);
+            if (detected.isDetected() && detected.getTechStack() != null && !detected.getTechStack().isBlank()) {
+                return detected.getTechStack();
+            }
+        }
+        return null;
     }
 
     @Transactional

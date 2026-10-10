@@ -1,14 +1,26 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { apiRequest, ProjectItem } from "@/lib/api";
+import { apiRequest, ProjectItem, TechStackDetection } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Input, Textarea } from "@/components/ui/Input";
 import { Badge } from "@/components/ui/Badge";
 import { Dialog } from "@/components/ui/Dialog";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { FolderGit2, Plus, Edit2, Trash2, ExternalLink, Github, Star, AlertCircle } from "lucide-react";
+import {
+  FolderGit2,
+  Plus,
+  Edit2,
+  Trash2,
+  ExternalLink,
+  Github,
+  Star,
+  AlertCircle,
+  Sparkles,
+  Loader2,
+  CheckCircle2
+} from "lucide-react";
 
 export default function StudentProjectsPage() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -23,6 +35,8 @@ export default function StudentProjectsPage() {
   const [techStack, setTechStack] = useState("");
   const [liveDemoUrl, setLiveDemoUrl] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
+  const [detectingStack, setDetectingStack] = useState(false);
+  const [detectedStackMsg, setDetectedStackMsg] = useState<{ type: "success" | "info" | "error"; text: string } | null>(null);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [featured, setFeatured] = useState(false);
@@ -55,6 +69,8 @@ export default function StudentProjectsPage() {
     setStartDate("");
     setEndDate("");
     setFeatured(false);
+    setDetectingStack(false);
+    setDetectedStackMsg(null);
     setModalOpen(true);
   };
 
@@ -68,7 +84,51 @@ export default function StudentProjectsPage() {
     setStartDate(proj.startDate || "");
     setEndDate(proj.endDate || "");
     setFeatured(proj.featured);
+    setDetectingStack(false);
+    setDetectedStackMsg(null);
     setModalOpen(true);
+  };
+
+  const handleDetectTechStack = async (urlOverride?: string) => {
+    const url = (urlOverride !== undefined ? urlOverride : githubUrl).trim();
+    if (!url) {
+      setDetectedStackMsg({ type: "info", text: "Please enter a GitHub repository URL first." });
+      return;
+    }
+    if (!url.toLowerCase().includes("github.com")) {
+      setDetectedStackMsg({
+        type: "error",
+        text: "Please enter a valid GitHub repository URL (e.g. https://github.com/username/project).",
+      });
+      return;
+    }
+
+    setDetectingStack(true);
+    setDetectedStackMsg(null);
+    try {
+      const res = await apiRequest<TechStackDetection>(
+        `/student/projects/detect-tech-stack?url=${encodeURIComponent(url)}`
+      );
+      if (res.detected && res.techStack) {
+        setTechStack(res.techStack);
+        setDetectedStackMsg({
+          type: "success",
+          text: `Auto-detected ${res.technologies.length} technologies from GitHub: ${res.techStack}`,
+        });
+      } else {
+        setDetectedStackMsg({
+          type: "info",
+          text: res.message || "No public language breakdown found. You can enter the stack manually.",
+        });
+      }
+    } catch (err: any) {
+      setDetectedStackMsg({
+        type: "error",
+        text: err.message || "Failed to inspect repository. You can enter the stack manually.",
+      });
+    } finally {
+      setDetectingStack(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -267,27 +327,72 @@ export default function StudentProjectsPage() {
             required
           />
 
-          <Input
-            label="Tech Stack (Comma-separated)"
-            placeholder="Java 21, Spring Boot, MySQL, Docker"
-            value={techStack}
-            onChange={(e) => setTechStack(e.target.value)}
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {/* GitHub Repository with Auto-Detect Button */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-medium text-[#191919]">GitHub Repository</label>
+              <button
+                type="button"
+                onClick={() => handleDetectTechStack()}
+                disabled={detectingStack || !githubUrl.trim()}
+                className="inline-flex items-center space-x-1 text-[11px] font-medium text-[#5555A5] hover:text-[#444485] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Automatically analyze languages and frameworks from this GitHub repository"
+              >
+                {detectingStack ? (
+                  <>
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Analyzing Repo...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-3 h-3 text-[#5555A5]" />
+                    <span>Auto-Detect Tech Stack</span>
+                  </>
+                )}
+              </button>
+            </div>
             <Input
-              label="Live URL"
-              placeholder="https://myservice.com"
-              value={liveDemoUrl}
-              onChange={(e) => setLiveDemoUrl(e.target.value)}
-            />
-            <Input
-              label="GitHub Repository"
-              placeholder="https://github.com/user/repo"
+              placeholder="https://github.com/username/project"
               value={githubUrl}
               onChange={(e) => setGithubUrl(e.target.value)}
+              onBlur={() => {
+                if (githubUrl.trim().toLowerCase().includes("github.com") && (!techStack || techStack.trim().length === 0)) {
+                  handleDetectTechStack(githubUrl);
+                }
+              }}
             />
+            {detectedStackMsg && (
+              <div
+                className={`text-[11px] px-2.5 py-1.5 rounded flex items-center gap-1.5 ${
+                  detectedStackMsg.type === "success"
+                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                    : detectedStackMsg.type === "error"
+                    ? "bg-red-50 text-red-700 border border-red-200"
+                    : "bg-[#FAF9F5] text-[#77756F] border border-[#DFDDD6]"
+                }`}
+              >
+                {detectedStackMsg.type === "success" && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />}
+                {detectedStackMsg.type === "error" && <AlertCircle className="w-3.5 h-3.5 text-red-600 flex-shrink-0" />}
+                <span>{detectedStackMsg.text}</span>
+              </div>
+            )}
           </div>
+
+          {/* Tech Stack Input */}
+          <Input
+            label="Tech Stack (Comma-separated)"
+            placeholder="Java, Spring Boot, MySQL, Docker"
+            value={techStack}
+            onChange={(e) => setTechStack(e.target.value)}
+            helperText="Auto-detected from GitHub or customize manually."
+          />
+
+          <Input
+            label="Live URL (Optional)"
+            placeholder="https://myservice.com"
+            value={liveDemoUrl}
+            onChange={(e) => setLiveDemoUrl(e.target.value)}
+          />
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Input

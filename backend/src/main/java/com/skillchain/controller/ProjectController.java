@@ -28,6 +28,13 @@ public class ProjectController {
         return ResponseEntity.ok(projects);
     }
 
+    @GetMapping("/detect-tech-stack")
+    public ResponseEntity<com.skillchain.dto.TechStackDetectionDto> detectTechStack(
+            @RequestParam("url") String githubUrl
+    ) {
+        return ResponseEntity.ok(projectService.detectTechStackFromGitHub(githubUrl));
+    }
+
     @PostMapping
     public ResponseEntity<ProjectResponse> addProject(
             @AuthenticationPrincipal UserDetails userDetails,
