@@ -72,6 +72,11 @@ public class Certificate {
     @Column(length = 30)
     private String storageProvider;
 
+    @JsonIgnore
+    @Lob
+    @Column(name = "file_data")
+    private byte[] fileData;
+
     @Column(nullable = false)
     private boolean isSystemCredentialId = false;
 
@@ -281,5 +286,13 @@ public class Certificate {
 
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public byte[] getFileData() {
+        return fileData;
+    }
+
+    public void setFileData(byte[] fileData) {
+        this.fileData = fileData;
     }
 }

@@ -64,6 +64,14 @@ export default function StudentCertificatesPage() {
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // In-App Document Preview Modal State
+  const [docPreviewModalOpen, setDocPreviewModalOpen] = useState(false);
+  const [docPreviewCert, setDocPreviewCert] = useState<CertificateItem | null>(null);
+  const [docPreviewUrl, setDocPreviewUrl] = useState<string | null>(null);
+  const [docPreviewType, setDocPreviewType] = useState<"image" | "pdf">("pdf");
+  const [docPreviewLoading, setDocPreviewLoading] = useState(false);
+  const [docPreviewError, setDocPreviewError] = useState<string | null>(null);
+
   const loadCertificates = async () => {
     setLoading(true);
     setError(null);
@@ -86,8 +94,9 @@ export default function StudentCertificatesPage() {
     return () => {
       if (modalFilePreview) URL.revokeObjectURL(modalFilePreview);
       if (standalonePreview) URL.revokeObjectURL(standalonePreview);
+      if (docPreviewUrl) URL.revokeObjectURL(docPreviewUrl);
     };
-  }, [modalFilePreview, standalonePreview]);
+  }, [modalFilePreview, standalonePreview, docPreviewUrl]);
 
   const openAddModal = () => {
     setEditingCert(null);
@@ -378,7 +387,14 @@ export default function StudentCertificatesPage() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (!res.ok) throw new Error("Failed to download certificate");
+      if (!res.ok) {
+        let msg = "Failed to download certificate";
+        try {
+          const errData = await res.json();
+          if (errData?.message) msg = errData.message;
+        } catch {}
+        throw new Error(msg);
+      }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
@@ -390,24 +406,51 @@ export default function StudentCertificatesPage() {
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
     } catch (err: any) {
-      alert(err.message || "Could not download certificate");
+      alert(err.message || "Could not download certificate document");
     }
   };
 
-  const handleAuthorizedPreview = async (certId: number) => {
+  const handleAuthorizedPreview = async (cert: CertificateItem) => {
+    setDocPreviewCert(cert);
+    if (docPreviewUrl) {
+      URL.revokeObjectURL(docPreviewUrl);
+      setDocPreviewUrl(null);
+    }
+    setDocPreviewError(null);
+    setDocPreviewLoading(true);
+    setDocPreviewModalOpen(true);
+
     try {
       const token = typeof window !== "undefined" ? localStorage.getItem("skillchain_token") : null;
-      const res = await fetch(`${API_BASE}/files/certificates/${certId}/preview`, {
+      const res = await fetch(`${API_BASE}/files/certificates/${cert.id}/preview`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
 
-      if (!res.ok) throw new Error("Failed to preview certificate");
+      if (!res.ok) {
+        let msg = "Failed to load certificate document from server storage.";
+        try {
+          const errData = await res.json();
+          if (errData?.message) msg = errData.message;
+        } catch {}
+        throw new Error(msg);
+      }
 
       const blob = await res.blob();
       const url = window.URL.createObjectURL(blob);
-      window.open(url, "_blank");
+      setDocPreviewUrl(url);
+
+      const fileName = (cert.fileName || "").toLowerCase();
+      const isImg =
+        blob.type.startsWith("image/") ||
+        fileName.endsWith(".png") ||
+        fileName.endsWith(".jpg") ||
+        fileName.endsWith(".jpeg");
+
+      setDocPreviewType(isImg ? "image" : "pdf");
     } catch (err: any) {
-      alert(err.message || "Could not open certificate preview");
+      setDocPreviewError(err.message || "Could not retrieve certificate document");
+    } finally {
+      setDocPreviewLoading(false);
     }
   };
 
@@ -567,8 +610,8 @@ export default function StudentCertificatesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleAuthorizedPreview(cert.id)}
-                        title="Preview certificate document in new tab"
+                        onClick={() => handleAuthorizedPreview(cert)}
+                        title="Preview certificate document"
                       >
                         <Eye className="w-3.5 h-3.5 mr-1 text-[#5555A5]" />
                         <span>Preview</span>
@@ -985,6 +1028,152 @@ export default function StudentCertificatesPage() {
               onClick={handleUploadSubmit}
             >
               <span>{uploading ? "Hashing & Uploading..." : "Upload & Bind Document"}</span>
+            </Button>
+          </div>
+        </div>
+      </Dialog>
+
+      {/* --- IN-APP CERTIFICATE DOCUMENT PREVIEW MODAL --- */}
+      <Dialog
+        open={docPreviewModalOpen}
+        onClose={() => {
+          if (docPreviewUrl) {
+            URL.revokeObjectURL(docPreviewUrl);
+            setDocPreviewUrl(null);
+          }
+          setDocPreviewModalOpen(false);
+        }}
+        title={docPreviewCert ? `Document Preview: ${docPreviewCert.title}` : "Certificate Preview"}
+        description={
+          docPreviewCert
+            ? `Issued by ${docPreviewCert.issuingOrganization} • ${docPreviewCert.fileName || "Credential File"}`
+            : "Verified credential document preview"
+        }
+      >
+        <div className="space-y-4">
+          {/* Loading state */}
+          {docPreviewLoading && (
+            <div className="py-16 flex flex-col items-center justify-center space-y-3 text-center">
+              <Loader2 className="w-8 h-8 animate-spin text-[#5555A5]" />
+              <p className="text-xs text-[#77756F]">Loading authorized credential document...</p>
+            </div>
+          )}
+
+          {/* Error state */}
+          {docPreviewError && !docPreviewLoading && (
+            <div className="py-6 space-y-4 text-center">
+              <div className="p-4 rounded-[6px] bg-[#FEF2F2] border border-[#FEE2E2] text-left space-y-2">
+                <div className="flex items-center space-x-2 text-[#B91C1C] font-medium text-xs">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>Unable to preview document</span>
+                </div>
+                <p className="text-xs text-[#7F1D1D] leading-relaxed">
+                  {docPreviewError}
+                </p>
+              </div>
+
+              {docPreviewCert && (
+                <div className="flex justify-center">
+                  <Button
+                    size="sm"
+                    onClick={() => {
+                      if (docPreviewUrl) {
+                        URL.revokeObjectURL(docPreviewUrl);
+                        setDocPreviewUrl(null);
+                      }
+                      setDocPreviewModalOpen(false);
+                      openUploadModal(docPreviewCert);
+                    }}
+                  >
+                    <Upload className="w-3.5 h-3.5 mr-1.5" />
+                    <span>Replace / Re-upload File Now</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Successful Preview Content */}
+          {docPreviewUrl && !docPreviewLoading && (
+            <div className="space-y-3">
+              <div className="bg-[#FAF9F5] rounded-[6px] border border-[#DFDDD6] p-2 flex items-center justify-between text-xs text-[#77756F]">
+                <div className="flex items-center space-x-2 overflow-hidden">
+                  <FileCheck2 className="w-4 h-4 text-[#166534] shrink-0" />
+                  <span className="font-medium text-[#191919] truncate">
+                    {docPreviewCert?.fileName || "certificate_file"}
+                  </span>
+                  {docPreviewCert?.fileSize && (
+                    <span className="text-[11px] text-[#77756F]">
+                      ({formatFileSize(docPreviewCert.fileSize)})
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  <a
+                    href={docPreviewUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center space-x-1 px-2.5 py-1 text-[11px] font-medium text-[#5555A5] hover:text-[#444485] hover:bg-[#FFFFFF] rounded border border-[#DFDDD6] transition-colors"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                    <span>Open in Tab</span>
+                  </a>
+                  {docPreviewCert && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleAuthorizedDownload(
+                          docPreviewCert.id,
+                          docPreviewCert.fileName || `${docPreviewCert.title}.pdf`
+                        )
+                      }
+                      className="inline-flex items-center space-x-1 px-2.5 py-1 text-[11px] font-medium text-[#191919] hover:bg-[#FFFFFF] rounded border border-[#DFDDD6] transition-colors"
+                    >
+                      <Download className="w-3 h-3" />
+                      <span>Download</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Viewer depending on mime/file extension */}
+              {docPreviewType === "image" ? (
+                <div className="bg-[#191919]/5 rounded-[6px] p-2 flex items-center justify-center max-h-[60vh] overflow-auto border border-[#DFDDD6]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={docPreviewUrl}
+                    alt={docPreviewCert?.title || "Certificate preview"}
+                    className="max-h-[55vh] max-w-full rounded object-contain shadow-sm"
+                  />
+                </div>
+              ) : (
+                <div className="w-full h-[60vh] rounded-[6px] border border-[#DFDDD6] overflow-hidden bg-white">
+                  <iframe
+                    src={docPreviewUrl}
+                    className="w-full h-full border-0"
+                    title={docPreviewCert?.title || "Certificate Document"}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modal Footer */}
+          <div className="pt-2 flex justify-end space-x-2 border-t border-[#DFDDD6]/70">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (docPreviewUrl) {
+                  URL.revokeObjectURL(docPreviewUrl);
+                  setDocPreviewUrl(null);
+                }
+                setDocPreviewModalOpen(false);
+              }}
+            >
+              Close
             </Button>
           </div>
         </div>

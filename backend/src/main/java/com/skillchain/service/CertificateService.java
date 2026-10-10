@@ -129,6 +129,9 @@ public class CertificateService {
             certificate.setFileSize(meta.getFileSize());
             certificate.setContentType(meta.getContentType());
             certificate.setStorageProvider(meta.getStorageProvider());
+            try {
+                certificate.setFileData(file.getBytes());
+            } catch (Exception ignored) {}
         }
 
         Certificate saved = certificateRepository.save(certificate);
@@ -204,6 +207,9 @@ public class CertificateService {
         certificate.setFileSize(meta.getFileSize());
         certificate.setContentType(meta.getContentType());
         certificate.setStorageProvider(meta.getStorageProvider());
+        try {
+            certificate.setFileData(file.getBytes());
+        } catch (Exception ignored) {}
 
         Certificate saved = certificateRepository.save(certificate);
 
@@ -244,7 +250,27 @@ public class CertificateService {
             throw new ResourceNotFoundException("No document file associated with this certificate");
         }
 
-        return fileStorageService.loadCertificateDocumentAsResource(certificate.getFileKey());
+        try {
+            return fileStorageService.loadCertificateDocumentAsResource(certificate.getFileKey());
+        } catch (ResourceNotFoundException e) {
+            // Ephemeral filesystem recovery: if disk was wiped (e.g. Render redeploy), serve from database backup
+            if (certificate.getFileData() != null && certificate.getFileData().length > 0) {
+                final String fileName = certificate.getFileName() != null ? certificate.getFileName() : "certificate.pdf";
+                try {
+                    fileStorageService.saveCertificateBytes(certificate.getFileKey(), certificate.getFileData(), certificate.getContentType());
+                } catch (Exception ignored) {}
+
+                return new org.springframework.core.io.ByteArrayResource(certificate.getFileData()) {
+                    @Override
+                    public String getFilename() {
+                        return fileName;
+                    }
+                };
+            }
+            throw new ResourceNotFoundException(
+                    "Certificate document file was not found on server storage (ephemeral storage was reset). Please click 'Replace File' to re-attach your document."
+            );
+        }
     }
 
     @Transactional(readOnly = true)

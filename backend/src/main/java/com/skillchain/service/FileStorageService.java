@@ -305,7 +305,7 @@ public class FileStorageService {
         return new StoredFileMeta(fileKey, originalFilename, sha256, fileBytes.length, contentType, "LOCAL");
     }
 
-    private String saveCertificateBytes(String fileKey, byte[] fileBytes, String contentType) {
+    public String saveCertificateBytes(String fileKey, byte[] fileBytes, String contentType) {
         if (isS3Active()) {
             try {
                 PutObjectRequest putReq = PutObjectRequest.builder()
