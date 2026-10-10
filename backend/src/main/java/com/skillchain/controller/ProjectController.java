@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/student/projects")
@@ -29,10 +30,18 @@ public class ProjectController {
     }
 
     @GetMapping("/detect-tech-stack")
-    public ResponseEntity<com.skillchain.dto.TechStackDetectionDto> detectTechStack(
+    public ResponseEntity<com.skillchain.dto.TechStackDetectionDto> detectTechStackGet(
             @RequestParam("url") String githubUrl
     ) {
         return ResponseEntity.ok(projectService.detectTechStackFromGitHub(githubUrl));
+    }
+
+    @PostMapping("/detect-tech-stack")
+    public ResponseEntity<com.skillchain.dto.TechStackDetectionDto> detectTechStackPost(
+            @RequestBody Map<String, String> body
+    ) {
+        String url = body != null ? body.getOrDefault("url", body.get("githubUrl")) : "";
+        return ResponseEntity.ok(projectService.detectTechStackFromGitHub(url));
     }
 
     @PostMapping
@@ -44,7 +53,7 @@ public class ProjectController {
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id:[0-9]+}")
     public ResponseEntity<ProjectResponse> updateProject(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id,
@@ -54,7 +63,7 @@ public class ProjectController {
         return ResponseEntity.ok(updated);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/{id:[0-9]+}")
     public ResponseEntity<Void> deleteProject(
             @AuthenticationPrincipal UserDetails userDetails,
             @PathVariable Long id

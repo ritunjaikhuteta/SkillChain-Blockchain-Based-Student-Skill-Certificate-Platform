@@ -105,27 +105,101 @@ export default function StudentProjectsPage() {
 
     setDetectingStack(true);
     setDetectedStackMsg(null);
+
+    // Helper: direct browser GitHub API fallback
+    const detectDirectlyFromGitHub = async (targetUrl: string): Promise<boolean> => {
+      try {
+        const match = targetUrl.match(/github\.com\/([^/]+)\/([^/?#]+)/i);
+        if (!match) return false;
+        const owner = match[1];
+        let repo = match[2].replace(/\.git$/i, "");
+
+        const langRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/languages`);
+        if (!langRes.ok) return false;
+        const langData = await langRes.json();
+        const detected = Object.keys(langData).filter(
+          (l) => !["Roff", "Makefile", "Batchfile"].includes(l)
+        );
+
+        const techSet = new Set<string>(detected);
+
+        // Check root manifests
+        try {
+          const contentsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+          if (contentsRes.ok) {
+            const items = await contentsRes.json();
+            if (Array.isArray(items)) {
+              const fileNames = items.map((i: any) => (i.name || "").toLowerCase());
+              if (fileNames.includes("pom.xml")) {
+                techSet.add("Java");
+                techSet.add("Spring Boot");
+              } else if (fileNames.includes("build.gradle") || fileNames.includes("build.gradle.kts")) {
+                techSet.add("Gradle");
+              }
+              if (fileNames.includes("package.json")) {
+                techSet.add("Node.js");
+              }
+              if (fileNames.includes("dockerfile") || fileNames.includes("docker-compose.yml")) {
+                techSet.add("Docker");
+              }
+              if (fileNames.includes("requirements.txt") || fileNames.includes("pyproject.toml")) {
+                techSet.add("Python");
+              }
+              if (fileNames.includes("cargo.toml")) {
+                techSet.add("Rust");
+              }
+              if (fileNames.includes("go.mod")) {
+                techSet.add("Go / Golang");
+              }
+            }
+          }
+        } catch {}
+
+        const list = Array.from(techSet);
+        if (list.length > 0) {
+          const formatted = list.join(", ");
+          setTechStack(formatted);
+          setDetectedStackMsg({
+            type: "success",
+            text: `Auto-detected ${list.length} technologies from GitHub: ${formatted}`,
+          });
+          return true;
+        }
+      } catch {}
+      return false;
+    };
+
     try {
+      // 1. Try backend detection endpoint
       const res = await apiRequest<TechStackDetection>(
         `/student/projects/detect-tech-stack?url=${encodeURIComponent(url)}`
-      );
-      if (res.detected && res.techStack) {
+      ).catch(() => null);
+
+      if (res && res.detected && res.techStack) {
         setTechStack(res.techStack);
         setDetectedStackMsg({
           type: "success",
           text: `Auto-detected ${res.technologies.length} technologies from GitHub: ${res.techStack}`,
         });
-      } else {
+        return;
+      }
+
+      // 2. Direct GitHub API fallback
+      const directSuccess = await detectDirectlyFromGitHub(url);
+      if (directSuccess) return;
+
+      setDetectedStackMsg({
+        type: "info",
+        text: "Could not auto-detect languages for this repository. You can type them manually.",
+      });
+    } catch {
+      const directSuccess = await detectDirectlyFromGitHub(url);
+      if (!directSuccess) {
         setDetectedStackMsg({
           type: "info",
-          text: res.message || "No public language breakdown found. You can enter the stack manually.",
+          text: "Could not auto-detect languages for this repository. You can type them manually.",
         });
       }
-    } catch (err: any) {
-      setDetectedStackMsg({
-        type: "error",
-        text: err.message || "Failed to inspect repository. You can enter the stack manually.",
-      });
     } finally {
       setDetectingStack(false);
     }
