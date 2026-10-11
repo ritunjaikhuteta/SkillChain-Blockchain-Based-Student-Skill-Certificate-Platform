@@ -2,10 +2,16 @@
 
 > A cryptographically verified academic credential ledger, deterministic talent discovery engine, and interactive skill pathway platform built for higher education and enterprise recruitment.
 
+### 🌐 Live Deployments
+
+- **Frontend Application (Vercel):** [https://skill-chain-blockchain-based-studen.vercel.app/](https://skill-chain-blockchain-based-studen.vercel.app/)
+- **Backend REST API (Render):** [https://skillchain-backend-rfcw.onrender.com/](https://skillchain-backend-rfcw.onrender.com/)
+
 ---
 
 ## Table of Contents
 
+- [Live Deployments](#-live-deployments)
 - [1. Project Overview](#1-project-overview)
   - [Problem Statement](#problem-statement)
   - [Project Objectives](#project-objectives)
@@ -38,6 +44,7 @@
   - [Database Schema (MySQL)](#database-schema-mysql)
   - [Repository Directory Structure](#repository-directory-structure)
 - [13. Installation and Setup](#13-installation-and-setup)
+  - [Live Deployment Environments](#live-deployment-environments)
   - [Prerequisites](#prerequisites)
   - [Database Initialization](#database-initialization)
   - [Backend Setup & Execution](#backend-setup--execution)
@@ -1059,6 +1066,13 @@ skill-chain/
 ---
 
 ## 13. Installation and Setup
+
+### Live Deployment Environments
+
+The SkillChain platform is deployed and accessible online:
+
+- **Frontend Application (Vercel):** [https://skill-chain-blockchain-based-studen.vercel.app/](https://skill-chain-blockchain-based-studen.vercel.app/)
+- **Backend REST API (Render):** [https://skillchain-backend-rfcw.onrender.com/](https://skillchain-backend-rfcw.onrender.com/)
 
 ### Prerequisites
 Ensure your development environment meets the following requirements:
