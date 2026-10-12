@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useAuth } from "@/context/AuthContext";
 import { Button } from "./ui/Button";
 import { ShieldCheck, User as UserIcon, LogOut } from "lucide-react";
+import { SkillChainLogo } from "./SkillChainLogo";
 
 export function Navbar() {
   const { user, logout } = useAuth();
@@ -11,11 +12,8 @@ export function Navbar() {
   return (
     <header className="sticky top-0 z-40 w-full border-b border-[#DFDDD6] bg-[#FFFFFF]/90 backdrop-blur-sm">
       <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
-        <Link href="/" className="flex items-center space-x-2.5">
-          <div className="w-7 h-7 rounded-[4px] bg-[#191919] flex items-center justify-center text-white font-semibold text-sm">
-            S
-          </div>
-          <span className="font-semibold tracking-tight text-base text-[#191919]">SkillChain</span>
+        <Link href="/" className="flex items-center space-x-2.5 hover:opacity-90 transition-opacity">
+          <SkillChainLogo size={28} showText />
         </Link>
 
         <nav className="hidden md:flex items-center space-x-6 text-xs font-medium text-[#77756F]">

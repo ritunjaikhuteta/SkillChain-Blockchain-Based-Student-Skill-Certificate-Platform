@@ -2,6 +2,7 @@ import Link from "next/link";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/Button";
 import { SkillNetworkHero } from "@/components/SkillNetworkHero";
+import { SkillChainLogo } from "@/components/SkillChainLogo";
 import {
   ShieldCheck,
   ArrowRight,
@@ -47,6 +48,7 @@ export default function LandingPage() {
             <div className="pt-2 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
               <Link href="/register">
                 <Button size="lg" className="w-full sm:w-auto font-medium">
+                  <Briefcase className="w-4 h-4 mr-2 text-[#A5A5D8]" />
                   <span>Build Your Portfolio</span>
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </Button>
@@ -345,9 +347,7 @@ export default function LandingPage() {
       <footer className="py-10 px-6 border-t border-[#DFDDD6] bg-[#F8F7F3] text-xs text-[#77756F]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
           <div className="flex items-center space-x-2">
-            <div className="w-5 h-5 rounded-[3px] bg-[#191919] text-white flex items-center justify-center text-[10px] font-semibold">
-              S
-            </div>
+            <SkillChainLogo size={20} />
             <span className="font-semibold text-[#191919]">SkillChain</span>
             <span className="text-[#DFDDD6]">|</span>
             <span>Educational SHA-256 Cryptographic Talent Ledger</span>
