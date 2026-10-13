@@ -7,6 +7,16 @@
 - **Frontend Application (Vercel):** [https://skill-chain-blockchain-based-studen.vercel.app/](https://skill-chain-blockchain-based-studen.vercel.app/)
 - **Backend REST API (Render):** [https://skillchain-backend-rfcw.onrender.com/](https://skillchain-backend-rfcw.onrender.com/)
 
+### 🔑 Demo Credentials
+
+| Role | Email | Password | Access Capabilities |
+|---|---|---|---|
+| **Student** | `student@skillchain.edu` | `Password@123` | Portfolio management, skill graph, certificate uploads, Dijkstra recommendations |
+| **Recruiter** | `recruiter@skillchain.com` | `Password@123` | Multi-skill talent search, deterministic candidate ranking, student dossiers |
+| **Administrator** | `admin@skillchain.com` | `Admin@SkillChain123` | Blockchain ledger auditing, certificate revocation, system telemetry |
+
+> **Tip:** On the web application sign-in page (`/login`), click any demo account button to automatically populate credentials.
+
 ---
 
 ## Table of Contents

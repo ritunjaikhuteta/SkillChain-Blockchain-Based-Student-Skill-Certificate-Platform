@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { apiRequest, AuthResponse } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, KeyRound } from "lucide-react";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -87,6 +87,57 @@ export default function LoginPage() {
               <Button type="submit" loading={loading} className="w-full mt-2" size="md">
                 Sign In
               </Button>
+
+              {/* Demo Credentials Quick Fill */}
+              <div className="pt-3 border-t border-slate-200/90 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider font-mono flex items-center space-x-1">
+                    <KeyRound className="w-3 h-3 text-indigo-600" />
+                    <span>Demo Credentials</span>
+                  </span>
+                  <span className="text-[10px] text-indigo-600 font-medium">Click to fill</span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("student@skillchain.edu");
+                      setPassword("Password@123");
+                    }}
+                    className="p-2 rounded-[6px] border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 text-left transition-all group shadow-xs"
+                    title="Student: student@skillchain.edu / Password@123"
+                  >
+                    <div className="text-[11px] font-bold text-slate-800 group-hover:text-emerald-700">Student</div>
+                    <div className="text-[9px] text-slate-500 truncate mt-0.5">Alex Chen</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("recruiter@skillchain.com");
+                      setPassword("Password@123");
+                    }}
+                    className="p-2 rounded-[6px] border border-slate-200 bg-slate-50 hover:bg-indigo-50 hover:border-indigo-300 text-left transition-all group shadow-xs"
+                    title="Recruiter: recruiter@skillchain.com / Password@123"
+                  >
+                    <div className="text-[11px] font-bold text-slate-800 group-hover:text-indigo-700">Recruiter</div>
+                    <div className="text-[9px] text-slate-500 truncate mt-0.5">Sarah C.</div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail("admin@skillchain.com");
+                      setPassword("Admin@SkillChain123");
+                    }}
+                    className="p-2 rounded-[6px] border border-slate-200 bg-slate-50 hover:bg-purple-50 hover:border-purple-300 text-left transition-all group shadow-xs"
+                    title="Admin: admin@skillchain.com / Admin@SkillChain123"
+                  >
+                    <div className="text-[11px] font-bold text-slate-800 group-hover:text-purple-700">Admin</div>
+                    <div className="text-[9px] text-slate-500 truncate mt-0.5">Root Admin</div>
+                  </button>
+                </div>
+              </div>
             </form>
           </Card>
 
