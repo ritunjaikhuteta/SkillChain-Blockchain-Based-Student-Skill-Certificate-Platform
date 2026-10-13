@@ -24,17 +24,17 @@ interface GraphEdge {
 }
 
 const INITIAL_NODES: GraphNode[] = [
-  { id: "student", label: "Student Profile", group: "student", x: 0, y: 0, z: 0, radius: 9, color: "#191919", subtitle: "Verified Candidate" },
-  { id: "java", label: "Java 21", group: "skill", x: -110, y: -60, z: 40, radius: 7, color: "#5555A5", subtitle: "Core Language" },
-  { id: "spring", label: "Spring Boot", group: "skill", x: -70, y: 65, z: -30, radius: 7.5, color: "#5555A5", subtitle: "Enterprise Backend" },
-  { id: "microservices", label: "Microservices", group: "skill", x: -140, y: 30, z: 80, radius: 6.5, color: "#5555A5", subtitle: "Architecture" },
-  { id: "mysql", label: "MySQL 8", group: "skill", x: 40, y: -100, z: -50, radius: 6, color: "#77756F", subtitle: "Relational DB" },
-  { id: "docker", label: "Docker", group: "skill", x: -40, y: -80, z: 100, radius: 6.5, color: "#5555A5", subtitle: "Containerization" },
-  { id: "react", label: "React", group: "skill", x: 120, y: -40, z: 50, radius: 7, color: "#5555A5", subtitle: "UI Architecture" },
-  { id: "ts", label: "TypeScript", group: "skill", x: 140, y: 60, z: -20, radius: 6.5, color: "#77756F", subtitle: "Typed Systems" },
-  { id: "next", label: "Next.js", group: "skill", x: 80, y: 90, z: 70, radius: 6.5, color: "#5555A5", subtitle: "App Router" },
-  { id: "project", label: "FinTech Engine", group: "project", x: -10, y: 120, z: -40, radius: 8, color: "#3B82F6", subtitle: "Production Project" },
-  { id: "cert", label: "SHA-256 Ledger Record", group: "credential", x: 70, y: -30, z: -110, radius: 8, color: "#D97706", subtitle: "Tamper-Evident Block" }
+  { id: "student", label: "Student Profile", group: "student", x: 0, y: 0, z: 0, radius: 9, color: "#4F46E5", subtitle: "Verified Candidate" },
+  { id: "java", label: "Java 21", group: "skill", x: -110, y: -60, z: 40, radius: 7.5, color: "#EF4444", subtitle: "Core Language" },
+  { id: "spring", label: "Spring Boot", group: "skill", x: -70, y: 65, z: -30, radius: 8, color: "#10B981", subtitle: "Enterprise Backend" },
+  { id: "microservices", label: "Microservices", group: "skill", x: -140, y: 30, z: 80, radius: 7, color: "#6366F1", subtitle: "Architecture" },
+  { id: "mysql", label: "MySQL 8", group: "skill", x: 40, y: -100, z: -50, radius: 6.5, color: "#F59E0B", subtitle: "Relational DB" },
+  { id: "docker", label: "Docker", group: "skill", x: -40, y: -80, z: 100, radius: 7, color: "#0284C7", subtitle: "Containerization" },
+  { id: "react", label: "React", group: "skill", x: 120, y: -40, z: 50, radius: 7.5, color: "#06B6D4", subtitle: "UI Architecture" },
+  { id: "ts", label: "TypeScript", group: "skill", x: 140, y: 60, z: -20, radius: 7, color: "#3B82F6", subtitle: "Typed Systems" },
+  { id: "next", label: "Next.js", group: "skill", x: 80, y: 90, z: 70, radius: 7, color: "#8B5CF6", subtitle: "App Router" },
+  { id: "project", label: "FinTech Engine", group: "project", x: -10, y: 120, z: -40, radius: 8.5, color: "#EC4899", subtitle: "Production Project" },
+  { id: "cert", label: "SHA-256 Ledger Record", group: "credential", x: 70, y: -30, z: -110, radius: 8.5, color: "#14B8A6", subtitle: "Tamper-Evident Block" }
 ];
 
 const INITIAL_EDGES: GraphEdge[] = [
@@ -238,11 +238,11 @@ export function SkillNetworkHero() {
         ctx.lineTo(to.px, to.py);
 
         if (isHighlighted) {
-          ctx.strokeStyle = "rgba(85, 85, 165, 0.75)";
-          ctx.lineWidth = 1.8;
+          ctx.strokeStyle = "rgba(99, 102, 241, 0.9)";
+          ctx.lineWidth = 2.2;
           ctx.setLineDash([]);
         } else {
-          ctx.strokeStyle = "rgba(223, 221, 214, 0.85)";
+          ctx.strokeStyle = "rgba(203, 213, 225, 0.65)";
           ctx.lineWidth = 1.0;
           ctx.setLineDash([3, 4]);
         }
@@ -255,13 +255,13 @@ export function SkillNetworkHero() {
         const isHovered = hoveredNode?.id === node.id;
         const isSelected = selectedNode?.id === node.id;
 
-        const radius = Math.max(3.5, node.radius * scale * (isHovered || isSelected ? 1.35 : 1.0));
+        const radius = Math.max(4, node.radius * scale * (isHovered || isSelected ? 1.35 : 1.0));
 
-        // Outer halo for selected or hovered
+        // Outer glowing halo for selected or hovered
         if (isSelected || isHovered) {
           ctx.beginPath();
-          ctx.arc(px, py, radius + 6, 0, Math.PI * 2);
-          ctx.fillStyle = "rgba(85, 85, 165, 0.12)";
+          ctx.arc(px, py, radius + 7, 0, Math.PI * 2);
+          ctx.fillStyle = isSelected ? "rgba(99, 102, 241, 0.2)" : "rgba(6, 182, 212, 0.2)";
           ctx.fill();
         }
 
@@ -273,7 +273,7 @@ export function SkillNetworkHero() {
 
         // Node border
         ctx.strokeStyle = "#FFFFFF";
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.8;
         ctx.stroke();
 
         // Labels
@@ -286,9 +286,9 @@ export function SkillNetworkHero() {
 
         // Label pill background for clarity
         const textMetrics = ctx.measureText(node.label);
-        const padX = 4;
+        const padX = 5;
         const padY = 2;
-        ctx.fillStyle = "rgba(248, 247, 243, 0.88)";
+        ctx.fillStyle = "rgba(255, 255, 255, 0.92)";
         ctx.fillRect(
           px - textMetrics.width / 2 - padX,
           textY - padY,
@@ -296,7 +296,7 @@ export function SkillNetworkHero() {
           fontSize + padY * 2
         );
 
-        ctx.fillStyle = isSelected ? "#191919" : isHovered ? "#5555A5" : "#55524C";
+        ctx.fillStyle = isSelected ? "#4F46E5" : isHovered ? "#06B6D4" : "#1E293B";
         ctx.fillText(node.label, px, textY);
       });
 
@@ -314,12 +314,12 @@ export function SkillNetworkHero() {
   }, [isRotating, hoveredNode, selectedNode]);
 
   return (
-    <div className="relative w-full rounded-[6px] border border-[#DFDDD6] bg-[#FFFFFF] overflow-hidden flex flex-col shadow-[0_1px_3px_rgba(0,0,0,0.03)]">
+    <div className="relative w-full rounded-[12px] border border-slate-200/90 bg-white overflow-hidden flex flex-col shadow-[0_4px_24px_-4px_rgba(99,102,241,0.12)]">
       {/* Visual Header bar */}
-      <div className="px-5 py-3 border-b border-[#DFDDD6] flex items-center justify-between text-xs text-[#77756F] bg-[#FAF9F6]">
+      <div className="px-5 py-3 border-b border-slate-200/80 flex items-center justify-between text-xs text-slate-500 bg-slate-50/70">
         <div className="flex items-center space-x-2">
-          <span className="w-2 h-2 rounded-full bg-[#5555A5] animate-pulse"></span>
-          <span className="font-mono tracking-tight font-medium text-[#191919]">
+          <span className="w-2 h-2 rounded-full bg-indigo-600 animate-pulse"></span>
+          <span className="font-mono tracking-tight font-semibold text-slate-800">
             SKILL_NETWORK // TOPOLOGICAL PREVIEW
           </span>
         </div>
@@ -327,14 +327,14 @@ export function SkillNetworkHero() {
         <div className="flex items-center space-x-2">
           <button
             onClick={() => setIsRotating((prev) => !prev)}
-            className="px-2.5 py-1 rounded-[3px] border border-[#DFDDD6] bg-[#FFFFFF] hover:bg-[#F2F0EA] transition-colors text-[11px] font-medium text-[#191919]"
+            className="px-2.5 py-1 rounded-[6px] border border-slate-200 bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors text-[11px] font-medium text-slate-700 shadow-xs"
             title={isRotating ? "Pause rotation" : "Resume auto-rotation"}
           >
             {isRotating ? "Pause Orbit" : "Auto Orbit"}
           </button>
           <button
             onClick={resetOrientation}
-            className="p-1 rounded-[3px] border border-[#DFDDD6] bg-[#FFFFFF] hover:bg-[#F2F0EA] transition-colors text-[#77756F] hover:text-[#191919]"
+            className="p-1 rounded-[6px] border border-slate-200 bg-white hover:bg-indigo-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors text-slate-500 shadow-xs"
             title="Reset camera view"
           >
             <RotateCcw className="w-3.5 h-3.5" />
@@ -343,7 +343,7 @@ export function SkillNetworkHero() {
       </div>
 
       {/* Main Canvas Canvas Element */}
-      <div className="relative w-full h-[360px] sm:h-[420px] bg-[#FCFCFB] cursor-grab active:cursor-grabbing">
+      <div className="relative w-full h-[360px] sm:h-[420px] bg-gradient-to-b from-slate-50/50 via-indigo-50/15 to-white cursor-grab active:cursor-grabbing">
         <canvas
           ref={canvasRef}
           onPointerDown={handlePointerDown}
@@ -353,45 +353,45 @@ export function SkillNetworkHero() {
         />
 
         {/* Floating Instruction overlay */}
-        <div className="absolute top-3 left-4 pointer-events-none text-[11px] text-[#77756F] font-mono flex items-center space-x-1.5">
-          <Compass className="w-3.5 h-3.5 text-[#5555A5]" />
-          <span>Drag to orbit • Hover or click nodes to inspect</span>
+        <div className="absolute top-3 left-4 pointer-events-none text-[11px] text-slate-500 font-mono flex items-center space-x-1.5 bg-white/70 backdrop-blur-xs px-2 py-1 rounded-[4px] border border-slate-200/60">
+          <Compass className="w-3.5 h-3.5 text-indigo-600" />
+          <span>Drag to orbit • Click nodes to inspect</span>
         </div>
 
         {/* Live Pathway calculation pill */}
         {livePathway && (
           <div className="absolute bottom-3 left-4 right-4 sm:right-auto pointer-events-none">
-            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-[4px] bg-[#FFFFFF]/95 border border-[#DFDDD6] text-[11px] text-[#191919] shadow-sm">
-              <span className="font-mono text-[#5555A5] font-semibold text-[10px]">DIJKSTRA_PATH</span>
-              <span className="text-[#77756F]">|</span>
-              <span className="font-medium truncate">{livePathway}</span>
+            <div className="inline-flex items-center space-x-2 px-3 py-1.5 rounded-[8px] bg-white/95 border border-indigo-200/80 text-[11px] text-slate-800 shadow-sm shadow-indigo-500/10">
+              <span className="font-mono text-indigo-600 font-semibold text-[10px]">DIJKSTRA_PATH</span>
+              <span className="text-slate-300">|</span>
+              <span className="font-medium truncate text-indigo-950">{livePathway}</span>
             </div>
           </div>
         )}
       </div>
 
       {/* Interactive Detail Drawer */}
-      <div className="px-5 py-3.5 border-t border-[#DFDDD6] bg-[#FFFFFF] flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+      <div className="px-5 py-3.5 border-t border-slate-200/80 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
         {selectedNode ? (
           <div className="flex items-center space-x-3">
             <div
-              className="w-3 h-3 rounded-full flex-shrink-0"
+              className="w-3.5 h-3.5 rounded-full flex-shrink-0 shadow-xs"
               style={{ backgroundColor: selectedNode.color }}
             />
             <div>
-              <span className="font-semibold text-[#191919]">{selectedNode.label}</span>
-              <span className="text-[#77756F] ml-2">({selectedNode.subtitle})</span>
+              <span className="font-semibold text-slate-900">{selectedNode.label}</span>
+              <span className="text-slate-500 ml-2 font-medium">({selectedNode.subtitle})</span>
             </div>
           </div>
         ) : (
-          <span className="text-[#77756F]">Click any node on the graph to inspect relationships</span>
+          <span className="text-slate-500">Click any node on the graph to inspect relationships</span>
         )}
 
         <div className="flex items-center space-x-3 text-[11px]">
-          <span className="text-[#77756F]">Verified by SHA-256 Ledger:</span>
+          <span className="text-slate-500">Verified by SHA-256 Ledger:</span>
           <Link
             href="/verify"
-            className="font-medium text-[#5555A5] hover:underline inline-flex items-center"
+            className="font-semibold text-indigo-600 hover:text-indigo-700 hover:underline inline-flex items-center"
           >
             <span>Verify Public Record</span>
             <ArrowRight className="w-3 h-3 ml-1" />

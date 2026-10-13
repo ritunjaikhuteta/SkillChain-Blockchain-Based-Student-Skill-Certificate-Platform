@@ -95,24 +95,24 @@ export default function StudentDashboard() {
 
       {/* Profile Completion Prompt if under 100% */}
       {completion < 100 && (
-        <div className="p-5 rounded-[4px] border border-[#DFDDD6] bg-[#FFFFFF] flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div className="space-y-1">
+        <div className="p-5 rounded-[10px] border border-indigo-200/80 bg-gradient-to-r from-white via-indigo-50/30 to-purple-50/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 shadow-xs">
+          <div className="space-y-1.5">
             <div className="flex items-center space-x-2">
-              <span className="text-xs font-semibold text-[#191919]">Profile Completion: {completion}%</span>
-              <span className="text-[11px] text-[#77756F]">({100 - completion}% remaining)</span>
+              <span className="text-xs font-bold text-slate-900">Profile Completion: {completion}%</span>
+              <span className="text-[11px] text-slate-500">({100 - completion}% remaining)</span>
             </div>
-            <div className="w-full sm:w-64 h-2 bg-[#F2F0EA] rounded-full overflow-hidden">
+            <div className="w-full sm:w-64 h-2.5 bg-slate-200/70 rounded-full overflow-hidden">
               <div
-                className="h-full bg-[#5555A5] transition-all duration-300"
+                className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-emerald-500 transition-all duration-300"
                 style={{ width: `${completion}%` }}
               ></div>
             </div>
-            <p className="text-[11px] text-[#77756F] pt-1">
+            <p className="text-[11px] text-slate-500 pt-0.5">
               Add your institution, bio, skills, and projects to increase visibility to recruiters.
             </p>
           </div>
           <Link href="/dashboard/student/profile">
-            <Button size="sm" variant="accent">
+            <Button size="sm" variant="accent" className="shadow-xs shadow-violet-500/20">
               <span>Complete Profile</span>
               <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
             </Button>
@@ -122,46 +122,54 @@ export default function StudentDashboard() {
 
       {/* Summary Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-indigo-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Total Skills</span>
-            <Sparkles className="w-4 h-4 text-[#5555A5]" />
+            <div className="w-8 h-8 rounded-[8px] bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-xs">
+              <Sparkles className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-3 text-2xl font-semibold text-[#191919]">{stats?.skillsCount || 0}</div>
-          <Link href="/dashboard/student/skills" className="mt-2 inline-flex items-center text-[11px] text-[#5555A5] hover:underline">
+          <div className="mt-2 text-2xl font-bold text-slate-900">{stats?.skillsCount || 0}</div>
+          <Link href="/dashboard/student/skills" className="mt-2 inline-flex items-center text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
             Manage skills &rarr;
           </Link>
         </Card>
 
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-purple-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Projects</span>
-            <FolderGit2 className="w-4 h-4 text-[#5555A5]" />
+            <div className="w-8 h-8 rounded-[8px] bg-purple-50 border border-purple-200 flex items-center justify-center text-purple-600 shadow-xs">
+              <FolderGit2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-3 text-2xl font-semibold text-[#191919]">{stats?.projectsCount || 0}</div>
-          <Link href="/dashboard/student/projects" className="mt-2 inline-flex items-center text-[11px] text-[#5555A5] hover:underline">
+          <div className="mt-2 text-2xl font-bold text-slate-900">{stats?.projectsCount || 0}</div>
+          <Link href="/dashboard/student/projects" className="mt-2 inline-flex items-center text-xs font-semibold text-purple-600 hover:text-purple-700 hover:underline">
             Manage projects &rarr;
           </Link>
         </Card>
 
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-amber-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Certificates</span>
-            <Award className="w-4 h-4 text-[#5555A5]" />
+            <div className="w-8 h-8 rounded-[8px] bg-amber-50 border border-amber-200 flex items-center justify-center text-amber-600 shadow-xs">
+              <Award className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-3 text-2xl font-semibold text-[#191919]">{stats?.certificatesCount || 0}</div>
-          <Link href="/dashboard/student/certificates" className="mt-2 inline-flex items-center text-[11px] text-[#5555A5] hover:underline">
+          <div className="mt-2 text-2xl font-bold text-slate-900">{stats?.certificatesCount || 0}</div>
+          <Link href="/dashboard/student/certificates" className="mt-2 inline-flex items-center text-xs font-semibold text-amber-600 hover:text-amber-700 hover:underline">
             Manage certificates &rarr;
           </Link>
         </Card>
 
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-emerald-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Audit Status</span>
-            <CheckCircle2 className="w-4 h-4 text-[#166534]" />
+            <div className="w-8 h-8 rounded-[8px] bg-emerald-50 border border-emerald-200 flex items-center justify-center text-emerald-600 shadow-xs">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-3 text-2xl font-semibold text-[#166534]">Active</div>
-          <p className="mt-2 text-[11px] text-[#77756F]">Real database record</p>
+          <div className="mt-2 text-2xl font-bold text-emerald-600">Active</div>
+          <p className="mt-2 text-[11px] text-slate-500 font-medium">Real database record</p>
         </Card>
       </div>
 
@@ -171,25 +179,25 @@ export default function StudentDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Recent Projects</CardTitle>
-              <Link href="/dashboard/student/projects" className="text-xs text-[#5555A5] hover:underline">
+              <Link href="/dashboard/student/projects" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
                 View all
               </Link>
             </div>
           </CardHeader>
           <CardContent>
             {(!profile?.projects || profile.projects.length === 0) ? (
-              <p className="text-xs text-[#77756F] py-4">No projects recorded yet. Add your engineering work to showcase your stack.</p>
+              <p className="text-xs text-slate-500 py-4">No projects recorded yet. Add your engineering work to showcase your stack.</p>
             ) : (
               <div className="space-y-3">
                 {profile.projects.slice(0, 3).map((proj) => (
-                  <div key={proj.id} className="p-3 rounded-[3px] border border-[#DFDDD6] flex items-center justify-between">
+                  <div key={proj.id} className="p-3.5 rounded-[8px] border border-slate-200 bg-slate-50/50 hover:bg-white hover:border-indigo-200 hover:shadow-xs transition-all flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-semibold text-[#191919]">{proj.title}</p>
-                      <p className="text-[11px] text-[#77756F]">{proj.techStack || "General"}</p>
+                      <p className="text-xs font-bold text-slate-900">{proj.title}</p>
+                      <p className="text-[11px] text-slate-500 font-medium">{proj.techStack || "General"}</p>
                     </div>
                     {proj.githubUrl && (
-                      <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="text-[#77756F] hover:text-[#191919]">
-                        <ExternalLink className="w-3.5 h-3.5" />
+                      <a href={proj.githubUrl} target="_blank" rel="noreferrer" className="text-slate-400 hover:text-indigo-600 transition-colors">
+                        <ExternalLink className="w-4 h-4" />
                       </a>
                     )}
                   </div>
@@ -203,18 +211,18 @@ export default function StudentDashboard() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <CardTitle>Top Skills</CardTitle>
-              <Link href="/dashboard/student/skills" className="text-xs text-[#5555A5] hover:underline">
+              <Link href="/dashboard/student/skills" className="text-xs font-semibold text-indigo-600 hover:text-indigo-700 hover:underline">
                 View all
               </Link>
             </div>
           </CardHeader>
           <CardContent>
             {(!profile?.skills || profile.skills.length === 0) ? (
-              <p className="text-xs text-[#77756F] py-4">No skills registered yet. Add technical competencies to your profile.</p>
+              <p className="text-xs text-slate-500 py-4">No skills registered yet. Add technical competencies to your profile.</p>
             ) : (
               <div className="flex flex-wrap gap-2">
                 {profile.skills.slice(0, 8).map((skill) => (
-                  <Badge key={skill.id} variant="secondary">
+                  <Badge key={skill.id} variant="default">
                     {skill.name} • {skill.proficiency.toLowerCase()}
                   </Badge>
                 ))}

@@ -48,59 +48,60 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F7F3]">
+    <div className="min-h-screen flex flex-col bg-slate-50 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <Navbar />
 
       <main className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-1">
-            <h1 className="text-2xl font-semibold tracking-tight text-[#191919]">
-              Create your SkillChain account
+            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+              Create your <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">SkillChain</span> account
             </h1>
-            <p className="text-xs text-[#77756F]">
+            <p className="text-xs text-slate-500">
               Select your role to start building or discovering verified talent
             </p>
           </div>
 
-          <Card>
+          <Card className="rounded-[12px] border-slate-200 shadow-lg shadow-indigo-500/5 bg-white/95 backdrop-blur-sm p-6">
             <form onSubmit={handleSubmit} className="space-y-4">
               {error && (
-                <div className="p-3 rounded-[3px] bg-[#FEF2F2] border border-[#FEE2E2] flex items-start space-x-2 text-xs text-[#B91C1C]">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div className="p-3 rounded-[6px] bg-rose-50 border border-rose-200 flex items-start space-x-2 text-xs text-rose-700">
+                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-600" />
                   <span>{error}</span>
                 </div>
               )}
 
               {/* Role Selection */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-medium text-[#191919]">
+                <label className="block text-xs font-semibold text-slate-700">
                   I want to join as:
                 </label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
                     onClick={() => setRole("STUDENT")}
-                    className={`px-3 py-2.5 rounded-[4px] border text-left transition-colors ${
+                    className={`px-3 py-2.5 rounded-[8px] border text-left transition-all ${
                       role === "STUDENT"
-                        ? "border-[#5555A5] bg-[#F0EFF8] text-[#191919]"
-                        : "border-[#DFDDD6] bg-[#FFFFFF] text-[#77756F] hover:bg-[#F2F0EA]"
+                        ? "border-indigo-500 bg-indigo-50/80 text-indigo-900 ring-2 ring-indigo-500/20 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="text-xs font-semibold">Student / Graduate</div>
-                    <div className="text-[11px] text-[#77756F]">Showcase verified skills &amp; projects</div>
+                    <div className="text-xs font-bold text-slate-900">Student / Graduate</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Showcase verified skills &amp; projects</div>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setRole("RECRUITER")}
-                    className={`px-3 py-2.5 rounded-[4px] border text-left transition-colors ${
+                    className={`px-3 py-2.5 rounded-[8px] border text-left transition-all ${
                       role === "RECRUITER"
-                        ? "border-[#5555A5] bg-[#F0EFF8] text-[#191919]"
-                        : "border-[#DFDDD6] bg-[#FFFFFF] text-[#77756F] hover:bg-[#F2F0EA]"
+                        ? "border-indigo-500 bg-indigo-50/80 text-indigo-900 ring-2 ring-indigo-500/20 shadow-xs"
+                        : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                     }`}
                   >
-                    <div className="text-xs font-semibold">Recruiter / Employer</div>
-                    <div className="text-[11px] text-[#77756F]">Discover verified engineering talent</div>
+                    <div className="text-xs font-bold text-slate-900">Recruiter / Employer</div>
+                    <div className="text-[11px] text-slate-500 mt-0.5">Discover verified engineering talent</div>
                   </button>
                 </div>
               </div>
@@ -132,15 +133,15 @@ export default function RegisterPage() {
                 required
               />
 
-              <Button type="submit" loading={loading} className="w-full" size="md">
+              <Button type="submit" loading={loading} className="w-full mt-2" size="md">
                 Register as {role === "STUDENT" ? "Student" : "Recruiter"}
               </Button>
             </form>
           </Card>
 
-          <p className="text-center text-xs text-[#77756F]">
+          <p className="text-center text-xs text-slate-500">
             Already have an account?{" "}
-            <Link href="/login" className="font-medium text-[#191919] hover:text-[#5555A5] underline underline-offset-4">
+            <Link href="/login" className="font-semibold text-indigo-600 hover:text-indigo-700 underline underline-offset-4">
               Sign in
             </Link>
           </p>

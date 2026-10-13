@@ -148,14 +148,14 @@ export default function AdminBlockchainPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-[3px] bg-[#FFFFFF] border border-[#DFDDD6] text-[11px] font-mono text-[#5555A5] mb-2 font-medium">
-            <Lock className="w-3 h-3" />
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-[11px] font-mono text-indigo-700 mb-2 font-bold shadow-xs">
+            <Lock className="w-3 h-3 text-indigo-600" />
             <span>SHA-256 AUDIT LEDGER // CANONICAL CHAIN</span>
           </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-[#191919]">
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
             Blockchain Ledger Explorer
           </h1>
-          <p className="text-xs text-[#77756F] mt-1 leading-relaxed">
+          <p className="text-xs text-slate-500 mt-1 leading-relaxed">
             Inspect immutable verification blocks, audit sequential hash links, and execute authorized
             certificate revocations.
           </p>
@@ -167,9 +167,9 @@ export default function AdminBlockchainPage() {
             variant="outline"
             onClick={triggerAudit}
             loading={validating}
-            className="font-medium"
+            className="font-medium hover:border-indigo-300 hover:text-indigo-600 shadow-xs"
           >
-            <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-[#5555A5]" />
+            <ShieldCheck className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
             <span>Audit Chain</span>
           </Button>
 
@@ -178,8 +178,9 @@ export default function AdminBlockchainPage() {
             variant="outline"
             onClick={loadBlockchainData}
             loading={loading}
+            className="shadow-xs"
           >
-            <RefreshCw className="w-3.5 h-3.5 mr-1.5" />
+            <RefreshCw className="w-3.5 h-3.5 mr-1.5 text-slate-500" />
             <span>Refresh</span>
           </Button>
         </div>
@@ -188,23 +189,23 @@ export default function AdminBlockchainPage() {
       {/* Action Notification */}
       {actionMessage && (
         <div
-          className={`p-4 rounded-[4px] border flex items-center justify-between text-xs ${
+          className={`p-4 rounded-[8px] border flex items-center justify-between text-xs shadow-xs ${
             actionMessage.type === "success"
-              ? "bg-[#F0FDF4] border-[#BBF7D0] text-[#166534]"
-              : "bg-[#FEF2F2] border-[#FECACA] text-[#B91C1C]"
+              ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+              : "bg-rose-50 border-rose-200 text-rose-800"
           }`}
         >
           <div className="flex items-center space-x-2">
             {actionMessage.type === "success" ? (
-              <CheckCircle2 className="w-4 h-4 shrink-0 text-[#166534]" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             ) : (
-              <AlertTriangle className="w-4 h-4 shrink-0 text-[#B91C1C]" />
+              <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
             )}
-            <span>{actionMessage.text}</span>
+            <span className="font-medium">{actionMessage.text}</span>
           </div>
           <button
             onClick={() => setActionMessage(null)}
-            className="text-[11px] font-mono underline ml-4"
+            className="text-[11px] font-mono underline ml-4 hover:opacity-80"
           >
             Dismiss
           </button>
@@ -214,65 +215,75 @@ export default function AdminBlockchainPage() {
       {/* Metrics Row */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         {/* Chain Integrity */}
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-emerald-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Ledger Integrity</span>
-            {validation?.chainValid ? (
-              <CheckCircle2 className="w-4 h-4 text-[#166534]" />
-            ) : (
-              <AlertTriangle className="w-4 h-4 text-[#DC2626]" />
-            )}
+            <div className={`w-8 h-8 rounded-[8px] border flex items-center justify-center shadow-xs ${
+              validation?.chainValid ? "bg-emerald-50 border-emerald-200 text-emerald-600" : "bg-rose-50 border-rose-200 text-rose-600"
+            }`}>
+              {validation?.chainValid ? (
+                <CheckCircle2 className="w-4 h-4" />
+              ) : (
+                <AlertTriangle className="w-4 h-4" />
+              )}
+            </div>
           </div>
           <div
-            className={`mt-2 text-2xl font-semibold font-mono ${
-              validation?.chainValid ? "text-[#166534]" : "text-[#DC2626]"
+            className={`mt-2 text-2xl font-bold font-mono ${
+              validation?.chainValid ? "text-emerald-700" : "text-rose-700"
             }`}
           >
             {validation?.chainValid ? "VERIFIED" : "CORRUPTED"}
           </div>
-          <p className="text-[11px] text-[#77756F] mt-1 font-mono">
+          <p className="text-[11px] text-slate-500 mt-1 font-mono font-medium">
             {validation?.totalBlocksAudited || 0} blocks audited
           </p>
         </Card>
 
         {/* Total Blocks */}
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-indigo-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Chain Length</span>
-            <Layers className="w-4 h-4 text-[#5555A5]" />
+            <div className="w-8 h-8 rounded-[8px] bg-indigo-50 border border-indigo-200 flex items-center justify-center text-indigo-600 shadow-xs">
+              <Layers className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-semibold font-mono text-[#191919]">
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">
             {status?.totalBlocks ?? blocks.length}
           </div>
-          <p className="text-[11px] text-[#77756F] mt-1 font-mono">
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">
             Latest Index: #{status?.latestBlockIndex ?? (blocks.length > 0 ? blocks.length - 1 : 0)}
           </p>
         </Card>
 
         {/* Total Revoked */}
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-rose-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Revoked Records</span>
-            <Ban className="w-4 h-4 text-[#77756F]" />
+            <div className="w-8 h-8 rounded-[8px] bg-rose-50 border border-rose-200 flex items-center justify-center text-rose-600 shadow-xs">
+              <Ban className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-semibold font-mono text-[#191919]">
+          <div className="mt-2 text-2xl font-bold font-mono text-slate-900">
             {status?.totalRevokedCertificates ?? blocks.filter((b) => b.revoked).length}
           </div>
-          <p className="text-[11px] text-[#77756F] mt-1 font-mono">
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">
             Recorded with actor audit
           </p>
         </Card>
 
         {/* Protocol Hash */}
-        <Card>
-          <div className="flex items-center justify-between text-xs text-[#77756F]">
+        <Card className="hover:border-cyan-300 transition-all shadow-xs">
+          <div className="flex items-center justify-between text-xs text-slate-500 font-medium">
             <span>Hashing Standard</span>
-            <Lock className="w-4 h-4 text-[#5555A5]" />
+            <div className="w-8 h-8 rounded-[8px] bg-cyan-50 border border-cyan-200 flex items-center justify-center text-cyan-600 shadow-xs">
+              <Lock className="w-4 h-4" />
+            </div>
           </div>
-          <div className="mt-2 text-2xl font-semibold font-mono text-[#191919]">
+          <div className="mt-2 text-2xl font-bold font-mono text-cyan-800">
             SHA-256
           </div>
-          <p className="text-[11px] text-[#77756F] mt-1 font-mono">
+          <p className="text-[11px] text-slate-500 mt-1 font-mono">
             Canonical serialization
           </p>
         </Card>

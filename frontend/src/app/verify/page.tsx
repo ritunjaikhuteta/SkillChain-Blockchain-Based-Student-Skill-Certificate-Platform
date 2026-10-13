@@ -130,26 +130,27 @@ export default function VerifyPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#F8F7F3]">
+    <div className="min-h-screen flex flex-col bg-slate-50 relative overflow-hidden">
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[350px] bg-gradient-to-b from-indigo-500/10 via-purple-500/5 to-transparent blur-3xl pointer-events-none -z-10" />
       <Navbar />
 
       <main className="flex-1 max-w-3xl mx-auto w-full px-6 py-12">
         <div className="text-center space-y-2 mb-8">
-          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-[3px] bg-[#F0EFF8] text-xs font-medium text-[#5555A5] mb-2">
-            <ShieldCheck className="w-3.5 h-3.5" />
+          <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-indigo-50 border border-indigo-200/80 text-xs font-semibold text-indigo-700 mb-2 shadow-xs">
+            <ShieldCheck className="w-3.5 h-3.5 text-indigo-600" />
             <span>Cryptographic Verification Registry</span>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-[#191919]">
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
             Verify Certificate Authenticity
           </h1>
-          <p className="text-xs text-[#77756F] max-w-md mx-auto">
+          <p className="text-xs text-slate-500 max-w-md mx-auto">
             Inspect immutable blockchain issuance proofs or verify the cryptographic SHA-256 integrity
             of an uploaded certificate document.
           </p>
         </div>
 
         {/* Verification Mode Selector */}
-        <div className="flex border-b border-[#DFDDD6] mb-6">
+        <div className="flex border-b border-slate-200 mb-6">
           <button
             type="button"
             onClick={() => {
@@ -157,10 +158,10 @@ export default function VerifyPage() {
               setSearched(false);
               setError(null);
             }}
-            className={`flex items-center space-x-2 py-2.5 px-4 text-xs font-medium border-b-2 transition-colors ${
+            className={`flex items-center space-x-2 py-2.5 px-4 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "id"
-                ? "border-[#5555A5] text-[#5555A5]"
-                : "border-transparent text-[#77756F] hover:text-[#191919]"
+                ? "border-indigo-600 text-indigo-700 bg-indigo-50/50 rounded-t-[6px]"
+                : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50"
             }`}
           >
             <Search className="w-3.5 h-3.5" />
@@ -173,10 +174,10 @@ export default function VerifyPage() {
               setSearched(false);
               setError(null);
             }}
-            className={`flex items-center space-x-2 py-2.5 px-4 text-xs font-medium border-b-2 transition-colors ${
+            className={`flex items-center space-x-2 py-2.5 px-4 text-xs font-semibold border-b-2 transition-all ${
               activeTab === "file"
-                ? "border-[#5555A5] text-[#5555A5]"
-                : "border-transparent text-[#77756F] hover:text-[#191919]"
+                ? "border-indigo-600 text-indigo-700 bg-indigo-50/50 rounded-t-[6px]"
+                : "border-transparent text-slate-500 hover:text-slate-900 hover:bg-slate-100/50"
             }`}
           >
             <FileSearch className="w-3.5 h-3.5" />
@@ -377,12 +378,12 @@ export default function VerifyPage() {
                 </div>
               </div>
             ) : (
-              <div className="p-5 rounded-[4px] border border-[#DFDDD6] bg-[#FFFFFF] space-y-5">
+              <div className="p-6 rounded-[12px] border border-emerald-300 bg-white shadow-lg shadow-emerald-500/5 space-y-5">
                 {/* Header Status */}
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div className="flex items-center space-x-2">
-                    <CheckCircle className="w-4 h-4 text-[#166534]" />
-                    <span className="text-sm font-semibold text-[#166534]">
+                    <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    <span className="text-sm font-bold text-emerald-700">
                       Cryptographically Verified on SHA-256 Ledger
                     </span>
                   </div>
@@ -390,28 +391,28 @@ export default function VerifyPage() {
                 </div>
 
                 {/* Primary Certificate Information */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-3 border-t border-[#DFDDD6]">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-3 border-t border-slate-200">
                   <div>
-                    <span className="text-[#77756F]">Certificate Title:</span>
-                    <p className="font-medium text-[#191919] mt-0.5">{result.certificateTitle || "Attested Credential"}</p>
+                    <span className="text-slate-500">Certificate Title:</span>
+                    <p className="font-bold text-slate-900 mt-0.5">{result.certificateTitle || "Attested Credential"}</p>
                   </div>
                   <div>
-                    <span className="text-[#77756F]">Issuing Entity:</span>
-                    <p className="font-medium text-[#191919] mt-0.5">{result.issuingOrganization || "N/A"}</p>
+                    <span className="text-slate-500">Issuing Entity:</span>
+                    <p className="font-bold text-slate-900 mt-0.5">{result.issuingOrganization || "N/A"}</p>
                   </div>
                   <div>
-                    <span className="text-[#77756F]">
+                    <span className="text-slate-500">
                       {result.isSystemCredentialId || result.credentialId?.startsWith("SKC-")
                         ? "SkillChain Credential ID (Platform Generated):"
                         : "Issuer Credential ID:"}
                     </span>
-                    <p className="font-mono font-medium text-[#191919] mt-0.5">
+                    <p className="font-mono font-bold text-indigo-700 mt-0.5">
                       {result.credentialId || credentialId}
                     </p>
                   </div>
                   <div>
-                    <span className="text-[#77756F]">Ledger Anchored Date:</span>
-                    <p className="font-mono font-medium text-[#191919] mt-0.5">
+                    <span className="text-slate-500">Ledger Anchored Date:</span>
+                    <p className="font-mono font-medium text-slate-800 mt-0.5">
                       {result.issuedOrAnchoredAt ? new Date(result.issuedOrAnchoredAt).toLocaleDateString() : "Verified Block"}
                     </p>
                   </div>
@@ -419,25 +420,25 @@ export default function VerifyPage() {
 
                 {/* --- 3-TIER VERIFICATION BREAKDOWN --- */}
                 <div className="space-y-3 pt-2">
-                  <h4 className="text-xs font-semibold text-[#191919] uppercase tracking-wider font-mono">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase tracking-wider font-mono">
                     Multi-Dimensional Verification Breakdown
                   </h4>
 
                   {/* Dimension 1: Blockchain Ledger Record */}
-                  <div className="p-3 bg-[#FAF9F6] rounded border border-[#DFDDD6] text-xs space-y-2">
+                  <div className="p-3.5 bg-slate-50 rounded-[8px] border border-slate-200 text-xs space-y-2">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle2 className="w-4 h-4 text-[#166534]" />
-                        <span className="font-medium text-[#191919]">1. Blockchain Ledger Record</span>
+                        <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                        <span className="font-semibold text-slate-900">1. Blockchain Ledger Record</span>
                       </div>
-                      <span className="text-[10px] font-mono font-medium text-[#166534] bg-[#F0FDF4] px-2 py-0.5 rounded border border-[#BBF7D0]">
+                      <span className="text-[10px] font-mono font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                         ANCHORED &amp; VALID
                       </span>
                     </div>
-                    <div className="text-[11px] font-mono text-[#77756F] space-y-1">
-                      <div className="truncate">Block #{result.blockIndex ?? 0} Hash: <span className="text-[#191919]">{result.blockHash}</span></div>
+                    <div className="text-[11px] font-mono text-slate-500 space-y-1">
+                      <div className="truncate">Block #{result.blockIndex ?? 0} Hash: <span className="text-slate-900 font-medium">{result.blockHash}</span></div>
                       {result.previousBlockHash && (
-                        <div className="truncate">Prev Hash: <span className="text-[#191919]">{result.previousBlockHash}</span></div>
+                        <div className="truncate">Prev Hash: <span className="text-slate-900 font-medium">{result.previousBlockHash}</span></div>
                       )}
                     </div>
                   </div>

@@ -2,24 +2,26 @@ import React from "react";
 
 interface BadgeProps {
   children: React.ReactNode;
-  variant?: "default" | "secondary" | "outline" | "accent" | "success" | "warning" | "destructive";
+  variant?: "default" | "secondary" | "outline" | "accent" | "success" | "warning" | "destructive" | "cyan" | "indigo";
   className?: string;
 }
 
 export function Badge({ children, variant = "default", className = "" }: BadgeProps) {
   const variantStyles = {
-    default: "bg-[#191919] text-[#FFFFFF]",
-    secondary: "bg-[#F2F0EA] text-[#191919] border border-[#DFDDD6]",
-    outline: "bg-transparent text-[#77756F] border border-[#DFDDD6]",
-    accent: "bg-[#F0EFF8] text-[#5555A5] border border-[#DFDEEE]",
-    success: "bg-[#F0FDF4] text-[#166534] border border-[#DCFCE7]",
-    warning: "bg-[#FEFCE8] text-[#854D0E] border border-[#FEF08A]",
-    destructive: "bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]",
+    default: "bg-indigo-50 text-indigo-700 border border-indigo-200/80 shadow-xs",
+    secondary: "bg-slate-100 text-slate-700 border border-slate-200",
+    outline: "bg-white text-slate-600 border border-slate-300",
+    accent: "bg-purple-50 text-purple-700 border border-purple-200/80",
+    indigo: "bg-indigo-500 text-white font-medium shadow-xs shadow-indigo-500/20",
+    cyan: "bg-cyan-50 text-cyan-800 border border-cyan-200/80",
+    success: "bg-emerald-50 text-emerald-800 border border-emerald-200/80",
+    warning: "bg-amber-50 text-amber-800 border border-amber-200/80",
+    destructive: "bg-rose-50 text-rose-800 border border-rose-200/80",
   }[variant];
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded-[3px] text-xs font-medium tracking-tight ${variantStyles} ${className}`}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium tracking-tight ${variantStyles} ${className}`}
     >
       {children}
     </span>
