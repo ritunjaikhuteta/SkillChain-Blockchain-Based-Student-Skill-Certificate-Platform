@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/Input";
 import { Card } from "@/components/ui/Card";
 import { apiRequest, AuthResponse } from "@/lib/api";
 import { useAuth } from "@/context/AuthContext";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, KeyRound } from "lucide-react";
 
 export default function RegisterPage() {
   const { login } = useAuth();
@@ -18,6 +18,22 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"STUDENT" | "RECRUITER">("STUDENT");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const handleDemoLogin = async (demoEmail: string, demoPass: string) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiRequest<AuthResponse>("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email: demoEmail, password: demoPass }),
+      });
+      login(response);
+    } catch (err: any) {
+      setError(err.message || "Failed to log in with demo account.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +77,56 @@ export default function RegisterPage() {
             <p className="text-xs text-slate-500">
               Select your role to start building or discovering verified talent
             </p>
+          </div>
+
+          {/* Demo Credentials Quick Access Banner */}
+          <div className="p-4 rounded-[12px] bg-gradient-to-r from-indigo-50/90 via-purple-50/50 to-white border border-indigo-200/90 shadow-xs space-y-2.5">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-bold text-slate-900 uppercase tracking-wider font-mono flex items-center space-x-1.5">
+                <KeyRound className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Demo Credentials Available</span>
+              </span>
+              <span className="text-[10px] text-indigo-700 font-semibold bg-indigo-100/80 px-2 py-0.5 rounded-full">
+                1-Click Sign In
+              </span>
+            </div>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Skip registration and instantly test any role with pre-configured demo workspaces:
+            </p>
+            <div className="grid grid-cols-3 gap-2 pt-0.5">
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("student@skillchain.edu", "Password@123")}
+                className="p-2.5 rounded-[8px] border border-emerald-200 bg-white hover:bg-emerald-50 hover:border-emerald-300 text-left transition-all shadow-xs group"
+                title="Login as Alex Chen: student@skillchain.edu / Password@123"
+              >
+                <div className="text-xs font-bold text-emerald-800 group-hover:text-emerald-900">Student</div>
+                <div className="text-[10px] text-slate-500 font-mono truncate mt-0.5">student@skillchain.edu</div>
+                <div className="text-[9px] text-slate-400 font-mono mt-0.5">Password@123</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("recruiter@skillchain.com", "Password@123")}
+                className="p-2.5 rounded-[8px] border border-indigo-200 bg-white hover:bg-indigo-50 hover:border-indigo-300 text-left transition-all shadow-xs group"
+                title="Login as Sarah Connor: recruiter@skillchain.com / Password@123"
+              >
+                <div className="text-xs font-bold text-indigo-800 group-hover:text-indigo-900">Recruiter</div>
+                <div className="text-[10px] text-slate-500 font-mono truncate mt-0.5">recruiter@skillchain.com</div>
+                <div className="text-[9px] text-slate-400 font-mono mt-0.5">Password@123</div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleDemoLogin("admin@skillchain.com", "Admin@SkillChain123")}
+                className="p-2.5 rounded-[8px] border border-purple-200 bg-white hover:bg-purple-50 hover:border-purple-300 text-left transition-all shadow-xs group"
+                title="Login as Platform Administrator: admin@skillchain.com / Admin@SkillChain123"
+              >
+                <div className="text-xs font-bold text-purple-800 group-hover:text-purple-900">Admin</div>
+                <div className="text-[10px] text-slate-500 font-mono truncate mt-0.5">admin@skillchain.com</div>
+                <div className="text-[9px] text-slate-400 font-mono mt-0.5">Admin@SkillChain123</div>
+              </button>
+            </div>
           </div>
 
           <Card className="rounded-[12px] border-slate-200 shadow-lg shadow-indigo-500/5 bg-white/95 backdrop-blur-sm p-6">
