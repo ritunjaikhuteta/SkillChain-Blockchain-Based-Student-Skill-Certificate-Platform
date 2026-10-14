@@ -17,11 +17,21 @@
 
 > **Tip:** On the web application sign-in page (`/login`), click any demo account button to automatically populate credentials.
 
+### 📚 Project Documentation & Deliverables
+
+| Deliverable | Resource Type | Link | Description |
+|---|:---:|:---:|---|
+| **Project Presentation (PPT)** | Google Slides / PPT | [View Presentation ↗](https://docs.google.com/presentation/d/1ovjqQtcE111_z7erZrZ2znDU9UKnLMJ0/edit?usp=drive_link&ouid=114586393378048456818&rtpof=true&sd=true) | Comprehensive slide presentation detailing architecture, cryptographic ledger, graph algorithms, and live demonstration |
+| **Research Paper** | Academic Paper (PDF) | [Read Research Paper ↗](https://drive.google.com/file/d/181ZJRAG9GHkG2pefYnaoOXWkc5XJw1R7/view?usp=drive_link) | Academic research paper on blockchain-backed verifiable credentials and deterministic talent discovery |
+| **Project Report** | Capstone Report | [View Project Report ↗](https://docs.google.com/document/d/1YtwTNoOJgawIG1SeC8w3UOMN2tnZwQQZ/edit?usp=drive_link&ouid=114247592043702040924&rtpof=true&sd=true) | Comprehensive engineering capstone project report covering methodology, system design, testing, and deployment |
+| **Software Requirements Specification (SRS)** | SRS Document (PDF) | [View SRS Document ↗](https://drive.google.com/file/d/1ss6zWk_MuzA5YTv3lEUy8Sa31FIG9aqw/view?usp=drive_link) | Formal Software Requirements Specification defining functional/non-functional requirements, personas, and system models |
+
 ---
 
 ## Table of Contents
 
 - [Live Deployments](#-live-deployments)
+- [Project Documentation & Deliverables](#-project-documentation--deliverables)
 - [1. Project Overview](#1-project-overview)
   - [Problem Statement](#problem-statement)
   - [Project Objectives](#project-objectives)
@@ -67,6 +77,7 @@
   - [Frontend Production Build & Routing Validation (Audit Report Attribution)](#frontend-production-build--routing-validation-audit-report-attribution)
 - [16. Security Considerations](#16-security-considerations)
 - [17. Limitations and Future Improvements](#17-limitations-and-future-improvements)
+- [18. Project Documentation & Deliverables](#18-project-documentation--deliverables)
 
 ---
 
@@ -1376,3 +1387,17 @@ npm run build
 - **Distributed Cloud Storage:** Integrate an Amazon S3 / Cloudflare R2 storage provider with pre-signed upload URLs for scalable document storage.
 - **Async Processing & Webhooks:** Introduce RabbitMQ or Apache Kafka to handle document hashing, ledger anchoring, and candidate ranking asynchronously.
 - **W3C Verifiable Credentials Compliance:** Adopt the W3C Verifiable Credentials (VC) and Decentralized Identifiers (DID) standards for cross-platform academic interoperability.
+
+---
+
+## 18. Project Documentation & Deliverables
+
+Official academic publications, capstone reports, specifications, and presentation materials for the **SkillChain** platform:
+
+| # | Document Title | Resource Type | Link | Description |
+|:---:|---|:---:|:---:|---|
+| 1 | **Project Presentation** | Google Slides / PPT | [Open Presentation ↗](https://docs.google.com/presentation/d/1ovjqQtcE111_z7erZrZ2znDU9UKnLMJ0/edit?usp=drive_link&ouid=114586393378048456818&rtpof=true&sd=true) | Full slide deck covering platform motivation, architectural modules, SHA-256 hash chaining, Dijkstra learning pathway computation, recruiter ranking engine, and UI workflows. |
+| 2 | **Research Paper** | Academic Research Paper | [Read Research Paper ↗](https://drive.google.com/file/d/181ZJRAG9GHkG2pefYnaoOXWkc5XJw1R7/view?usp=drive_link) | In-depth academic paper exploring tamper-evident cryptographic credential anchoring, weighted graph traversal algorithms, deterministic ranking heuristics, and empirical evaluation. |
+| 3 | **Project Report** | Engineering Capstone Report | [Open Project Report ↗](https://docs.google.com/document/d/1YtwTNoOJgawIG1SeC8w3UOMN2tnZwQQZ/edit?usp=drive_link&ouid=114247592043702040924&rtpof=true&sd=true) | Complete technical capstone report documenting system analysis, architectural decomposition, database schema, Spring Boot / Next.js implementation, test suites, and audit results. |
+| 4 | **Software Requirements Specification (SRS)** | SRS Document | [Open SRS Document ↗](https://drive.google.com/file/d/1ss6zWk_MuzA5YTv3lEUy8Sa31FIG9aqw/view?usp=drive_link) | Formal specification document outlining functional and non-functional requirements, use-case analyses, user persona ecosystem, interface specifications, and security constraints. |
+
