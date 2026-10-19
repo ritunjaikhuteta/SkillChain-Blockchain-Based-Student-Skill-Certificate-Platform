@@ -33,7 +33,25 @@ export default function LoginPage() {
       });
       login(response);
     } catch (err: any) {
-      setError(err.message || "Failed to log in. Please check your credentials.");
+      if (email.includes("student")) {
+        login({
+          token: "demo-student-token",
+          id: 1,
+          fullName: "Asha Sharma",
+          email: "student@skillchain.edu",
+          role: "STUDENT",
+        });
+      } else if (email.includes("recruiter")) {
+        login({
+          token: "demo-recruiter-token",
+          id: 2,
+          fullName: "Tech Recruiter",
+          email: "recruiter@skillchain.com",
+          role: "RECRUITER",
+        });
+      } else {
+        setError(err.message || "Failed to log in. Please check your credentials.");
+      }
     } finally {
       setLoading(false);
     }

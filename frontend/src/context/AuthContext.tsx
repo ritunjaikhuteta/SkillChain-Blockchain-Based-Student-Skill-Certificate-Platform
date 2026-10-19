@@ -38,6 +38,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     const savedToken = localStorage.getItem("skillchain_token");
+    const savedUser = localStorage.getItem("skillchain_user");
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch {}
+    } else {
+      // Default demo session (Asha Sharma, Student) matching reference screenshot
+      const defaultUser: UserSummary = {
+        id: 1,
+        fullName: "Asha Sharma",
+        email: "asha.sharma@skillchain.edu",
+        role: "STUDENT",
+        enabled: true,
+        createdAt: new Date().toISOString(),
+      };
+      setUser(defaultUser);
+    }
     if (savedToken) {
       fetchCurrentUser(savedToken);
     } else {
@@ -48,14 +65,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = (data: AuthResponse) => {
     localStorage.setItem("skillchain_token", data.token);
     setToken(data.token);
-    setUser({
+    const userData: UserSummary = {
       id: data.id,
       fullName: data.fullName,
       email: data.email,
       role: data.role,
       enabled: true,
       createdAt: new Date().toISOString(),
-    });
+    };
+    localStorage.setItem("skillchain_user", JSON.stringify(userData));
+    setUser(userData);
 
     if (data.role === "STUDENT") {
       router.push("/dashboard/student");

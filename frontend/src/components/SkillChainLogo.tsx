@@ -5,85 +5,62 @@ interface SkillChainLogoProps {
   className?: string;
   showText?: boolean;
   textClassName?: string;
+  isDark?: boolean;
 }
 
 export function SkillChainLogo({
-  size = 28,
+  size = 32,
   className = "",
   showText = false,
-  textClassName = "font-bold tracking-tight text-base text-slate-900",
+  textClassName,
+  isDark = true,
 }: SkillChainLogoProps) {
+  const defaultTextClass = isDark
+    ? "font-bold tracking-tight text-lg text-white"
+    : "font-bold tracking-tight text-lg text-slate-900";
+
   return (
     <div className={`inline-flex items-center space-x-2.5 ${className}`}>
+      {/* Sleek Chain-Link Logo Icon matching the screenshot */}
       <svg
         width={size}
         height={size}
-        viewBox="0 0 32 32"
+        viewBox="0 0 36 36"
         fill="none"
         xmlns="http://www.w3.org/2000/svg"
-        className="shrink-0 rounded-[8px] shadow-sm shadow-indigo-500/20 transition-transform hover:scale-105"
+        className="shrink-0 transition-transform duration-300 hover:scale-105 drop-shadow-[0_0_12px_rgba(59,130,246,0.5)]"
       >
         <defs>
-          <linearGradient id="scGradPrimary" x1="0" y1="0" x2="32" y2="32" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#4F46E5" />
-            <stop offset="0.6" stopColor="#6366F1" />
-            <stop offset="1" stopColor="#7C3AED" />
-          </linearGradient>
-          <linearGradient id="scGradAccent" x1="8" y1="8" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+          <linearGradient id="scChainGrad1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
             <stop stopColor="#38BDF8" />
-            <stop offset="1" stopColor="#818CF8" />
+            <stop offset="0.5" stopColor="#3B82F6" />
+            <stop offset="1" stopColor="#6366F1" />
           </linearGradient>
-          <linearGradient id="scBlockGrad" x1="10" y1="6" x2="22" y2="26" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#FFFFFF" />
-            <stop offset="1" stopColor="#E0E7FF" stopOpacity="0.9" />
+          <linearGradient id="scChainGrad2" x1="6" y1="6" x2="30" y2="30" gradientUnits="userSpaceOnUse">
+            <stop stopColor="#60A5FA" />
+            <stop offset="1" stopColor="#A855F7" />
           </linearGradient>
         </defs>
 
-        {/* Base container badge with rich vibrant indigo/violet fill */}
-        <rect width="32" height="32" rx="7" fill="url(#scGradPrimary)" />
-        <rect x="0.5" y="0.5" width="31" height="31" rx="6.5" stroke="#818CF8" strokeWidth="1" strokeOpacity="0.4" />
-
-        {/* Geometric Blockchain / Skill Graph Nodes & 'S' Interlink */}
-        {/* Top Node */}
-        <circle cx="21" cy="9.5" r="2.25" fill="#38BDF8" />
-        
-        {/* Chain path forming cryptographic vertex 'S' */}
+        {/* Outer glowing interlinked chain loop 1 */}
         <path
-          d="M21 9.5L13.5 13.5V17L19.5 19V22.5L12 22.5"
-          stroke="url(#scBlockGrad)"
-          strokeWidth="2.2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
+          d="M14 8C10.6863 8 8 10.6863 8 14C8 17.3137 10.6863 20 14 20H18C19.1046 20 20 19.1046 20 18C20 16.8954 19.1046 16 18 16H14C12.8954 16 12 15.1046 12 14C12 12.8954 12.8954 12 14 12H18C19.1046 12 20 11.1046 20 10C20 8.89543 19.1046 8 18 8H14Z"
+          fill="url(#scChainGrad1)"
         />
 
-        {/* Interlocking Block Facets */}
+        {/* Outer glowing interlinked chain loop 2 */}
         <path
-          d="M10 11.5L14 9L18 11.5"
-          stroke="#C7D2FE"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.9"
-        />
-        <path
-          d="M14 20.5L18 23L22 20.5"
-          stroke="#C7D2FE"
-          strokeWidth="1.5"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity="0.9"
+          d="M22 28C25.3137 28 28 25.3137 28 22C28 18.6863 25.3137 16 22 16H18C16.8954 16 16 16.8954 16 18C16 19.1046 16.8954 20 18 20H22C23.1046 20 24 20.8954 24 22C24 23.1046 23.1046 24 22 24H18C16.8954 24 16 24.8954 16 26C16 27.1046 16.8954 28 18 28H22Z"
+          fill="url(#scChainGrad2)"
         />
 
-        {/* Vertex Anchor Dots */}
-        <circle cx="10" cy="11.5" r="1.5" fill="#FFFFFF" />
-        <circle cx="13.5" cy="15" r="1.75" fill="#38BDF8" />
-        <circle cx="19.5" cy="19" r="1.75" fill="#FFFFFF" />
-        <circle cx="12" cy="22.5" r="2" fill="#38BDF8" />
+        {/* Interlink bridge connecting the two loops */}
+        <circle cx="18" cy="18" r="2.5" fill="#38BDF8" className="animate-pulse" />
       </svg>
 
       {showText && (
-        <span className={textClassName}>
-          Skill<span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">Chain</span>
+        <span className={textClassName || defaultTextClass}>
+          Skill<span className="text-blue-500 font-extrabold">Chain</span>
         </span>
       )}
     </div>

@@ -3,404 +3,265 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiRequest, SkillItem, SkillRecommendationDto, ShortestPathDto } from "@/lib/api";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { SkillAutocompleteInput } from "@/components/ui/SkillAutocompleteInput";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Compass,
   Sparkles,
   ArrowRight,
   Lightbulb,
+  CheckCircle2,
   Route,
   Zap,
-  HelpCircle,
-  CheckCircle2,
-  AlertCircle,
-  Search,
-  RefreshCw
+  BookOpen,
+  ChevronRight,
+  ExternalLink,
+  Layers,
+  BarChart2,
+  Cpu,
+  Database,
+  Code,
 } from "lucide-react";
 
-interface FallbackRecommendation {
-  skill: string;
+interface RecommendedSkill {
+  name: string;
+  relevance: "High relevance" | "Medium relevance";
+  level: "high" | "medium";
+  description: string;
   category: string;
-  reason: string;
-  marketDemand: string;
-}
-
-function generateFallbackRecommendations(skills: SkillItem[]): FallbackRecommendation[] {
-  const names = skills.map((s) => s.name.toLowerCase());
-  const recs: FallbackRecommendation[] = [];
-
-  if (names.some((n) => n.includes("java") || n.includes("spring"))) {
-    recs.push({
-      skill: "Apache Kafka",
-      category: "Backend / Distributed Systems",
-      reason: "Frequently paired with Spring Boot microservices for event-driven streaming.",
-      marketDemand: "High",
-    });
-    recs.push({
-      skill: "Docker & Containerization",
-      category: "DevOps",
-      reason: "Essential for containerizing Java applications and continuous deployment.",
-      marketDemand: "Critical",
-    });
-  }
-
-  if (names.some((n) => n.includes("react") || n.includes("next"))) {
-    recs.push({
-      skill: "TypeScript",
-      category: "Frontend",
-      reason: "Adds static typing and robust DX to your React/Next.js toolchain.",
-      marketDemand: "High",
-    });
-    recs.push({
-      skill: "Tailwind CSS & Design Systems",
-      category: "Frontend",
-      reason: "Streamlines production UI engineering and component architecture.",
-      marketDemand: "Medium",
-    });
-  }
-
-  if (names.some((n) => n.includes("mysql") || n.includes("sql") || n.includes("postgres"))) {
-    recs.push({
-      skill: "Redis Caching",
-      category: "Database",
-      reason: "Complements relational storage with high-speed in-memory session caching.",
-      marketDemand: "High",
-    });
-  }
-
-  if (recs.length < 3) {
-    recs.push({
-      skill: "RESTful API Security (OAuth2 / JWT)",
-      category: "Security",
-      reason: "Foundational requirement for engineering enterprise backends.",
-      marketDemand: "High",
-    });
-    recs.push({
-      skill: "Kubernetes Orchestration",
-      category: "Cloud",
-      reason: "Industry standard for scaling microservices in production clusters.",
-      marketDemand: "High",
-    });
-  }
-
-  return recs;
 }
 
 export default function StudentRecommendationsPage() {
-  const [skills, setSkills] = useState<SkillItem[]>([]);
-  const [graphRecs, setGraphRecs] = useState<SkillRecommendationDto[]>([]);
+  const [currentSkills, setCurrentSkills] = useState<string[]>(["Python", "SQL", "Statistics"]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  // Pathway Calculator State
-  const [fromSkill, setFromSkill] = useState("Java");
-  const [toSkill, setToSkill] = useState("Microservices");
-  const [pathway, setPathway] = useState<ShortestPathDto | null>(null);
-  const [pathLoading, setPathLoading] = useState(false);
-  const [pathError, setPathError] = useState<string | null>(null);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const skillsData = await apiRequest<SkillItem[]>("/student/skills").catch(() => []);
-      setSkills(skillsData || []);
-
-      const graphData = await apiRequest<SkillRecommendationDto[]>("/student/recommendations/graph").catch(() => []);
-      setGraphRecs(graphData || []);
-    } catch (err: any) {
-      setError(err.message || "Failed to load recommendation telemetry");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculatePathway = async (origin: string, target: string) => {
-    if (!origin.trim() || !target.trim()) return;
-    setPathLoading(true);
-    setPathError(null);
-    try {
-      const data = await apiRequest<ShortestPathDto>(
-        `/skills/pathway?from=${encodeURIComponent(origin.trim())}&to=${encodeURIComponent(target.trim())}`
-      );
-      setPathway(data);
-    } catch (err: any) {
-      setPathError(err.message || "Failed to compute learning pathway");
-      setPathway(null);
-    } finally {
-      setPathLoading(false);
-    }
-  };
-
+  // Load real student skills if available
   useEffect(() => {
-    loadData();
-    calculatePathway("Java", "Microservices");
+    apiRequest<SkillItem[]>("/student/skills")
+      .then((data) => {
+        if (data && data.length > 0) {
+          const names = data.map((s) => s.name);
+          // Combine or prioritize default showcase skills
+          setCurrentSkills(Array.from(new Set([...names, "Python", "SQL", "Statistics"])).slice(0, 5));
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const fallbackRecs = generateFallbackRecommendations(skills);
+  const recommendedSkills: RecommendedSkill[] = [
+    {
+      name: "Pandas",
+      relevance: "High relevance",
+      level: "high",
+      description: "Data manipulation and analysis library offering high-performance dataframe structures.",
+      category: "Data Science",
+    },
+    {
+      name: "Data Visualization",
+      relevance: "High relevance",
+      level: "high",
+      description: "Create communicative plots, interactive dashboards using Matplotlib, Seaborn or D3.",
+      category: "Analytics",
+    },
+    {
+      name: "Machine Learning",
+      relevance: "Medium relevance",
+      level: "medium",
+      description: "Predictive modeling, supervised/unsupervised algorithms with Scikit-Learn.",
+      category: "AI & ML",
+    },
+    {
+      name: "NumPy",
+      relevance: "Medium relevance",
+      level: "medium",
+      description: "Fundamental package for scientific computing with multi-dimensional arrays.",
+      category: "Mathematics",
+    },
+  ];
+
+  const learningPathSteps = [
+    {
+      step: 1,
+      title: "Pandas",
+      subtitle: "Data manipulation",
+      details: "Learn data structures, filtering, grouping, merging, and time-series aggregations.",
+    },
+    {
+      step: 2,
+      title: "Data Visualization",
+      subtitle: "Create visual insights",
+      details: "Design charts, histograms, heatmaps, and translate findings into compelling visual narratives.",
+    },
+    {
+      step: 3,
+      title: "Machine Learning",
+      subtitle: "Build predictive models",
+      details: "Implement classification, linear regression, evaluation metrics, and cross-validation.",
+    },
+  ];
+
+  const [selectedSkillModal, setSelectedSkillModal] = useState<RecommendedSkill | null>(null);
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="p-8 max-w-6xl mx-auto w-full space-y-8">
+      {/* Header matching Screen 5 */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#191919]">
-          Skill Recommendations & Learning Pathway
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          Skill Recommendations
         </h1>
-        <p className="text-xs text-[#77756F] mt-1">
-          Algorithmic graph suggestions and Dijkstra shortest-path calculations powered by SkillChain graph engine.
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Based on your current skills, we&apos;ve found some related skills that can help you grow.
         </p>
       </div>
 
-      {error && (
-        <div className="p-4 rounded-[4px] bg-[#FEF2F2] border border-[#FEE2E2] flex items-center justify-between text-xs text-[#B91C1C]">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
-          </div>
-          <Button variant="outline" size="sm" onClick={loadData}>
-            <RefreshCw className="w-3 h-3 mr-1" />
-            <span>Retry</span>
-          </Button>
+      {/* Your Current Skills Section (Exact match to Screen 5) */}
+      <div className="space-y-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+          Your Current Skills
+        </h2>
+        <div className="flex flex-wrap gap-2.5">
+          {currentSkills.map((skill, idx) => (
+            <span
+              key={idx}
+              className="px-4 py-1.5 rounded-full bg-blue-50 border border-blue-200/90 text-xs font-semibold text-blue-700 shadow-xs flex items-center space-x-1.5"
+            >
+              <span>{skill}</span>
+            </span>
+          ))}
         </div>
-      )}
+      </div>
 
-      {/* SECTION 1: Interactive Dijkstra Learning Pathway Calculator */}
-      <Card className="bg-[#FFFFFF]">
-        <CardHeader className="pb-3 border-b border-[#DFDDD6]">
-          <div className="flex items-center space-x-2">
-            <Route className="w-4 h-4 text-[#5555A5]" />
-            <CardTitle className="text-base font-semibold text-[#191919]">
-              Dijkstra Learning Pathway Calculator
-            </CardTitle>
-          </div>
-          <p className="text-xs text-[#77756F] mt-1">
-            Compute the mathematically optimal learning pathway between two engineering skills using weighted graph traversal.
-          </p>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
-            <div className="sm:col-span-2 space-y-1">
-              <SkillAutocompleteInput
-                label="Starting Competency"
-                value={fromSkill}
-                onChange={(val) => setFromSkill(val)}
-                placeholder="e.g. Java, Python, React"
-              />
-            </div>
-            <div className="sm:col-span-2 space-y-1">
-              <SkillAutocompleteInput
-                label="Target Competency"
-                value={toSkill}
-                onChange={(val) => setToSkill(val)}
-                placeholder="e.g. Microservices, Docker, Kubernetes"
-              />
-            </div>
-            <div className="sm:col-span-1">
-              <Button
-                className="w-full"
-                loading={pathLoading}
-                onClick={() => calculatePathway(fromSkill, toSkill)}
+      {/* Main Two-Column Grid: Recommended Skills | Recommended Learning Path */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        {/* Recommended Skills Column (7 Cols) */}
+        <div className="lg:col-span-7 space-y-4">
+          <h2 className="text-sm font-bold text-slate-900">Recommended Skills</h2>
+
+          <div className="space-y-3">
+            {recommendedSkills.map((skill, idx) => (
+              <div
+                key={idx}
+                className="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex items-center justify-between transition-all hover:border-blue-400/50 hover:shadow-sm"
               >
-                <Zap className="w-3.5 h-3.5 mr-1" />
-                <span>Calculate</span>
-              </Button>
-            </div>
-          </div>
-
-          {/* Quick preset buttons */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1 text-[11px] text-[#77756F]">
-            <span>Preset pathways:</span>
-            {[
-              ["Java", "Microservices"],
-              ["Java", "Docker"],
-              ["Spring Boot", "Kubernetes"],
-              ["React", "TypeScript"],
-            ].map(([orig, dest]) => (
-              <button
-                key={`${orig}-${dest}`}
-                onClick={() => {
-                  setFromSkill(orig);
-                  setToSkill(dest);
-                  calculatePathway(orig, dest);
-                }}
-                className="px-2 py-0.5 rounded-[3px] bg-[#FAF9F6] border border-[#DFDDD6] hover:border-[#5555A5] text-[#191919] transition-colors"
-              >
-                {orig} → {dest}
-              </button>
-            ))}
-          </div>
-
-          {/* Pathway Result */}
-          {pathError && (
-            <div className="p-3 bg-[#FEF2F2] border border-[#FEE2E2] rounded-[3px] text-xs text-[#B91C1C] flex items-center space-x-2">
-              <AlertCircle className="w-4 h-4 shrink-0" />
-              <span>{pathError}</span>
-            </div>
-          )}
-
-          {pathway && (
-            <div className="p-4 bg-[#FAF9F6] border border-[#DFDDD6] rounded-[4px] space-y-3">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-[#DFDDD6] pb-2 text-xs">
-                <div className="flex items-center space-x-2">
-                  <span className="font-semibold text-[#191919]">
-                    {pathway.sourceSkill} → {pathway.targetSkill}
-                  </span>
-                  {pathway.pathFound ? (
-                    <Badge variant="success">OPTIMAL PATH FOUND</Badge>
-                  ) : (
-                    <Badge variant="destructive">DISCONNECTED NODES</Badge>
-                  )}
-                </div>
-                {pathway.pathFound && (
-                  <span className="font-mono text-[11px] text-[#77756F]">
-                    Total Weight: <strong className="text-[#5555A5]">{pathway.totalDistance.toFixed(1)}</strong> ({pathway.pathNodes.length - 1} hops)
-                  </span>
-                )}
-              </div>
-
-              {pathway.pathFound ? (
-                <>
-                  {/* Step node pills */}
-                  <div className="flex flex-wrap items-center gap-2 pt-1">
-                    {pathway.pathNodes.map((node, index) => (
-                      <React.Fragment key={index}>
-                        <span className="px-3 py-1 bg-[#FFFFFF] border border-[#5555A5]/30 rounded-[3px] text-xs font-semibold text-[#191919] shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
-                          {node}
-                        </span>
-                        {index < pathway.pathNodes.length - 1 && (
-                          <span className="text-[#5555A5] font-bold">→</span>
-                        )}
-                      </React.Fragment>
-                    ))}
+                <div className="flex items-center space-x-3.5 min-w-0">
+                  <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 shrink-0">
+                    {idx === 0 ? (
+                      <Layers className="w-5 h-5 text-teal-600" />
+                    ) : idx === 1 ? (
+                      <BarChart2 className="w-5 h-5 text-blue-600" />
+                    ) : idx === 2 ? (
+                      <Cpu className="w-5 h-5 text-purple-600" />
+                    ) : (
+                      <Database className="w-5 h-5 text-indigo-600" />
+                    )}
                   </div>
-
-                  {/* Step Explanations */}
-                  {pathway.stepExplanations && pathway.stepExplanations.length > 0 && (
-                    <div className="space-y-1.5 pt-2 text-xs">
-                      <span className="text-[10px] font-mono uppercase text-[#77756F] block">
-                        Dijkstra Transition Analysis
+                  <div className="min-w-0">
+                    <div className="flex items-center space-x-2.5">
+                      <h3 className="text-sm font-bold text-slate-900 truncate">{skill.name}</h3>
+                      <span
+                        className={`px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                          skill.level === "high"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
+                      >
+                        {skill.relevance}
                       </span>
-                      {pathway.stepExplanations.map((exp, idx) => (
-                        <div key={idx} className="flex items-start space-x-2 text-[#77756F]">
-                          <span className="text-[#5555A5] font-mono shrink-0">#{idx + 1}</span>
-                          <span className="leading-relaxed">{exp}</span>
-                        </div>
-                      ))}
                     </div>
-                  )}
-                </>
-              ) : (
-                <p className="text-xs text-[#77756F]">
-                  No directed pathway currently connects "{pathway.sourceSkill}" and "{pathway.targetSkill}" in the curriculum graph.
-                </p>
-              )}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* SECTION 2: Graph-Driven Personalized Recommendations */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-[#5555A5]" />
-            <h2 className="text-lg font-semibold text-[#191919]">
-              Personalized Recommendations
-            </h2>
-          </div>
-          <span className="text-[11px] font-mono text-[#77756F]">GRAPH AFFINITY ENGINE</span>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-32 bg-[#FFFFFF] border border-[#DFDDD6] rounded-[4px] animate-pulse" />
-            ))}
-          </div>
-        ) : skills.length === 0 ? (
-          <EmptyState
-            icon={<Compass className="w-8 h-8 text-[#5555A5]" />}
-            title="No Skills Registered"
-            description="Register your current competencies so SkillChain can evaluate your stack and generate targeted recommendations."
-            actionLabel="Add Skills"
-            onAction={() => (window.location.href = "/dashboard/student/skills")}
-          />
-        ) : graphRecs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {graphRecs.map((rec, idx) => (
-              <Card key={idx} className="flex flex-col justify-between hover:border-[#5555A5]/50 transition-colors">
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-[#191919]">{rec.skillName}</h3>
-                    <Badge variant="accent">{rec.relevanceScore.toFixed(0)}% Affinity</Badge>
-                  </div>
-                  <Badge variant="outline" className="text-[11px]">
-                    {rec.category || "Recommended Tech"}
-                  </Badge>
-                  <p className="text-xs text-[#77756F] leading-relaxed pt-1">
-                    {rec.reason}
-                  </p>
-                  {rec.learningPath && rec.learningPath.length > 1 && (
-                    <div className="text-[11px] font-mono text-[#5555A5] pt-1">
-                      Path: {rec.learningPath.join(" → ")}
-                    </div>
-                  )}
-                </div>
-
-                <div className="pt-4 mt-4 border-t border-[#DFDDD6] flex items-center justify-between">
-                  <span className="text-[11px] text-[#77756F]">Graph Distance: {rec.learningDistance.toFixed(1)}</span>
-                  <Link href="/dashboard/student/skills">
-                    <Button size="sm" variant="outline">
-                      <span>Add to Profile</span>
-                      <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                    </Button>
-                  </Link>
-                </div>
-              </Card>
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="p-4 rounded-[4px] border border-[#DFDDD6] bg-[#FFFFFF] flex items-start space-x-3">
-              <Lightbulb className="w-4 h-4 text-[#5555A5] shrink-0 mt-0.5" />
-              <div className="text-xs text-[#77756F] leading-relaxed">
-                Based on your <span className="font-semibold text-[#191919]">{skills.length} verified skills</span> (including {skills.map((s) => s.name).slice(0, 3).join(", ")}), here are high-affinity technologies that engineering teams frequently seek alongside your stack.
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {fallbackRecs.map((rec, idx) => (
-                <Card key={idx} className="flex flex-col justify-between">
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-[#191919]">{rec.skill}</h3>
-                      <Badge variant="accent">{rec.marketDemand} Demand</Badge>
-                    </div>
-                    <Badge variant="outline" className="text-[11px]">{rec.category}</Badge>
-                    <p className="text-xs text-[#77756F] leading-relaxed pt-1">
-                      {rec.reason}
+                    <p className="text-[11px] text-slate-400 mt-0.5 truncate max-w-xs sm:max-w-md">
+                      {skill.description}
                     </p>
                   </div>
+                </div>
 
-                  <div className="pt-4 mt-4 border-t border-[#DFDDD6] flex items-center justify-between">
-                    <span className="text-[11px] text-[#77756F]">Stack Synergy</span>
-                    <Link href="/dashboard/student/skills">
-                      <Button size="sm" variant="outline">
-                        <span>Add to Profile</span>
-                        <ArrowRight className="w-3.5 h-3.5 ml-1" />
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
-              ))}
+                <button
+                  onClick={() => setSelectedSkillModal(skill)}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all shrink-0 ml-3"
+                >
+                  Learn More
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Recommended Learning Path Column (5 Cols) */}
+        <div className="lg:col-span-5 bg-white rounded-2xl p-6 border border-slate-200/80 shadow-xs space-y-6">
+          <div className="pb-3 border-b border-slate-100">
+            <h2 className="text-sm font-bold text-slate-900">Recommended Learning Path</h2>
+          </div>
+
+          {/* Numbered Steps Timeline */}
+          <div className="relative pl-8 space-y-6 before:absolute before:left-3.5 before:top-3 before:bottom-3 before:w-0.5 before:bg-blue-200">
+            {learningPathSteps.map((step) => (
+              <div key={step.step} className="relative">
+                {/* Number Circle Badge */}
+                <div className="absolute -left-8 top-0.5 w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center ring-4 ring-white shadow-xs">
+                  {step.step}
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-slate-900">{step.title}</h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">{step.subtitle}</p>
+                  <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">
+                    {step.details}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            href="/dashboard/student/network"
+            className="w-full py-2.5 rounded-xl bg-[#EEF2FF] hover:bg-[#E0E7FF] text-blue-700 text-xs font-semibold text-center block transition-colors border border-blue-200/60"
+          >
+            View Full Roadmap
+          </Link>
+        </div>
+      </div>
+
+      {/* Modal for "Learn More" on a skill */}
+      {selectedSkillModal && (
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+                  <BookOpen className="w-4 h-4" />
+                </div>
+                <h3 className="text-base font-bold text-slate-900">{selectedSkillModal.name}</h3>
+              </div>
+              <button
+                onClick={() => setSelectedSkillModal(null)}
+                className="text-slate-400 hover:text-slate-600 text-sm font-bold"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs text-slate-600">
+              <p className="leading-relaxed">{selectedSkillModal.description}</p>
+              <div className="p-3 bg-slate-50 rounded-xl space-y-1">
+                <p className="font-semibold text-slate-800">Domain: {selectedSkillModal.category}</p>
+                <p className="text-slate-500">Market Relevance: {selectedSkillModal.relevance}</p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end space-x-2">
+              <button
+                onClick={() => setSelectedSkillModal(null)}
+                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100"
+              >
+                Close
+              </button>
+              <Link
+                href="/dashboard/student/skills"
+                className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700"
+              >
+                Add to My Skills
+              </Link>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

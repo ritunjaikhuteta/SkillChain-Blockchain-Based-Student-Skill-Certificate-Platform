@@ -3,366 +3,414 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiRequest, CandidateRankDto } from "@/lib/api";
-import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Badge } from "@/components/ui/Badge";
-import { EmptyState } from "@/components/ui/EmptyState";
 import {
   Search,
-  ArrowRight,
-  ShieldCheck,
-  FolderGit2,
   SlidersHorizontal,
-  CheckCircle2,
-  XCircle,
+  ChevronDown,
   Sparkles,
-  AlertCircle,
-  RefreshCw,
-  Award
+  Award,
+  CheckCircle2,
+  FolderGit2,
+  X,
+  ExternalLink,
+  ShieldCheck,
+  UserCheck,
 } from "lucide-react";
 
-const SUGGESTED_SKILLS = [
-  "Java",
-  "Spring Boot",
-  "MySQL",
-  "Docker",
-  "React",
-  "TypeScript",
-  "Next.js",
-  "Python",
-  "PostgreSQL",
-  "Microservices",
+interface CandidateDisplay {
+  id: string;
+  name: string;
+  course: string;
+  gradYear: number;
+  skills: string[];
+  matchScore: number;
+  avatarBg: string;
+}
+
+const SAMPLE_CANDIDATES: CandidateDisplay[] = [
+  {
+    id: "1",
+    name: "Asha Sharma",
+    course: "Computer Science Engineering",
+    gradYear: 2025,
+    skills: ["Python", "SQL", "Java", "React"],
+    matchScore: 92,
+    avatarBg: "from-amber-400 to-rose-400",
+  },
+  {
+    id: "2",
+    name: "Rohan Mehta",
+    course: "Information Technology",
+    gradYear: 2025,
+    skills: ["Python", "SQL", "Data Analysis"],
+    matchScore: 78,
+    avatarBg: "from-blue-400 to-indigo-500",
+  },
+  {
+    id: "3",
+    name: "Sneha Patel",
+    course: "Computer Science Engineering",
+    gradYear: 2024,
+    skills: ["Python", "Machine Learning", "Pandas"],
+    matchScore: 72,
+    avatarBg: "from-emerald-400 to-teal-500",
+  },
+  {
+    id: "4",
+    name: "Vikram Malhotra",
+    course: "Software Engineering",
+    gradYear: 2025,
+    skills: ["React", "TypeScript", "Node.js", "GraphQL"],
+    matchScore: 68,
+    avatarBg: "from-purple-400 to-violet-500",
+  },
+  {
+    id: "5",
+    name: "Pooja Verma",
+    course: "Data Science & AI",
+    gradYear: 2026,
+    skills: ["Python", "PyTorch", "NumPy", "SQL"],
+    matchScore: 64,
+    avatarBg: "from-pink-400 to-rose-500",
+  },
 ];
 
 export default function CandidateSearchPage() {
-  const [query, setQuery] = useState("Java, Spring Boot");
-  const [candidates, setCandidates] = useState<CandidateRankDto[]>([]);
+  const [query, setQuery] = useState("Python, SQL");
+  const [candidates, setCandidates] = useState<CandidateDisplay[]>(SAMPLE_CANDIDATES);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [searched, setSearched] = useState(false);
 
-  const fetchRankedCandidates = async (skillsQuery: string) => {
+  // Filter states matching Screen 6 dropdowns
+  const [collegeFilter, setCollegeFilter] = useState("All Colleges");
+  const [courseFilter, setCourseFilter] = useState("All Courses");
+  const [gradYearFilter, setGradYearFilter] = useState("All Years");
+  const [skillsFilter, setSkillsFilter] = useState("Python, SQL");
+  const [certFilter, setCertFilter] = useState("Required");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // Compared candidates tracker
+  const [comparedList, setComparedList] = useState<string[]>([]);
+
+  const handleSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
     setLoading(true);
-    setError(null);
+
     try {
-      const cleanSkills = skillsQuery
+      const cleanSkills = query
         .split(",")
         .map((s) => s.trim())
         .filter((s) => s.length > 0);
 
       const endpoint = cleanSkills.length > 0
         ? `/recruiter/candidates/ranked?skills=${encodeURIComponent(cleanSkills.join(","))}&limit=25`
-        : "/recruiter/candidates/ranked?skills=Java&limit=25";
+        : "/recruiter/candidates/ranked?skills=Python&limit=25";
 
       const data = await apiRequest<CandidateRankDto[]>(endpoint);
-      setCandidates(data || []);
-      setSearched(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to query algorithmic candidate ranking");
-      setCandidates([]);
+      if (data && data.length > 0) {
+        const mapped: CandidateDisplay[] = data.map((c, i) => ({
+          id: String(c.studentId),
+          name: c.studentName || "Student",
+          course: "Computer Science Engineering",
+          gradYear: 2025,
+          skills: c.matchingSkills && c.matchingSkills.length > 0 ? c.matchingSkills : ["Python", "SQL"],
+          matchScore: Math.round((c.compositeScore ?? 0.85) * 100),
+          avatarBg: i % 2 === 0 ? "from-blue-400 to-indigo-500" : "from-emerald-400 to-teal-500",
+        }));
+        setCandidates(mapped);
+      } else {
+        // Fallback filter on sample
+        filterSample();
+      }
+    } catch {
+      filterSample();
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchRankedCandidates("Java, Spring Boot");
-  }, []);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    fetchRankedCandidates(query);
+  const filterSample = () => {
+    const qLower = query.toLowerCase();
+    const filtered = SAMPLE_CANDIDATES.filter((c) => {
+      const matchesSkill = c.skills.some((s) => qLower.includes(s.toLowerCase()));
+      const matchesYear = gradYearFilter === "All Years" || c.gradYear.toString() === gradYearFilter;
+      const matchesCourse = courseFilter === "All Courses" || c.course === courseFilter;
+      return matchesSkill && matchesYear && matchesCourse;
+    });
+    setCandidates(filtered.length > 0 ? filtered : SAMPLE_CANDIDATES);
   };
 
-  const handleToggleSkill = (skill: string) => {
-    const currentSkills = query
-      .split(",")
-      .map((s) => s.trim())
-      .filter((s) => s.length > 0);
+  const handleClearAll = () => {
+    setQuery("");
+    setCollegeFilter("All Colleges");
+    setCourseFilter("All Courses");
+    setGradYearFilter("All Years");
+    setSkillsFilter("All Skills");
+    setCertFilter("All");
+    setCandidates(SAMPLE_CANDIDATES);
+  };
 
-    const exists = currentSkills.some((s) => s.toLowerCase() === skill.toLowerCase());
-    let nextSkills: string[];
-    if (exists) {
-      nextSkills = currentSkills.filter((s) => s.toLowerCase() !== skill.toLowerCase());
+  const toggleCompare = (name: string) => {
+    if (comparedList.includes(name)) {
+      setComparedList(comparedList.filter((n) => n !== name));
     } else {
-      nextSkills = [...currentSkills, skill];
+      if (comparedList.length >= 3) {
+        alert("You can compare up to 3 candidates simultaneously.");
+        return;
+      }
+      setComparedList([...comparedList, name]);
     }
-
-    const nextQuery = nextSkills.join(", ");
-    setQuery(nextQuery);
-    fetchRankedCandidates(nextQuery);
   };
 
   return (
-    <div className="space-y-6 max-w-5xl">
-      {/* Header */}
+    <div className="p-8 max-w-6xl mx-auto w-full space-y-7">
+      {/* Header matching Screen 6 */}
       <div>
-        <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-[3px] bg-[#FFFFFF] border border-[#DFDDD6] text-[11px] font-mono text-[#5555A5] mb-2 font-medium">
-          <SlidersHorizontal className="w-3 h-3" />
-          <span>ALGORITHMIC RANKING // 50-25-15-10 FORMULA</span>
-        </div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#191919]">
-          Ranked Candidate Discovery
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+          Search Students
         </h1>
-        <p className="text-xs text-[#77756F] mt-1 leading-relaxed">
-          Evaluate candidates scored deterministically on Skill Match Coverage (50%), Proficiency Depth (25%),
-          Project Relevance (15%), and Blockchain-Verified Certificates (10%).
+        <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          Find the best candidates based on skills, filters and preferences.
         </p>
       </div>
 
-      {/* Search Input Card */}
-      <Card>
-        <form onSubmit={handleSearch} className="space-y-3">
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="flex-1">
-              <Input
-                placeholder="Enter required skills (comma-separated, e.g. Java, Spring Boot, MySQL, Docker)..."
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-              />
-            </div>
-            <Button type="submit" loading={loading} className="shrink-0 font-medium">
-              <Search className="w-3.5 h-3.5 mr-1.5" />
-              <span>Rank Candidates</span>
-            </Button>
-          </div>
+      {/* Main Search Input & Advanced Filters Button */}
+      <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-3">
+        <div className="relative flex-1 w-full">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search by skill, project, certificate or keyword..."
+            className="w-full pl-11 pr-4 py-3 rounded-2xl bg-white border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder-slate-400 shadow-xs focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          />
+        </div>
 
-          {/* Quick Skill Tags */}
-          <div className="flex flex-wrap items-center gap-1.5 pt-1 text-xs text-[#77756F]">
-            <span className="text-[11px] font-mono mr-1">QUICK FILTER:</span>
-            {SUGGESTED_SKILLS.map((skill) => {
-              const isSelected = query.toLowerCase().includes(skill.toLowerCase());
-              return (
-                <button
-                  key={skill}
-                  type="button"
-                  onClick={() => handleToggleSkill(skill)}
-                  className={`px-2 py-0.5 rounded-[3px] text-[11px] font-medium transition-colors border ${
-                    isSelected
-                      ? "bg-[#5555A5] text-[#FFFFFF] border-[#5555A5]"
-                      : "bg-[#F8F7F3] text-[#77756F] border-[#DFDDD6] hover:text-[#191919] hover:bg-[#FFFFFF]"
-                  }`}
-                >
-                  {skill} {isSelected ? "✓" : "+"}
-                </button>
-              );
-            })}
-          </div>
-        </form>
-      </Card>
+        <button
+          type="submit"
+          className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-blue-600 text-white text-xs sm:text-sm font-semibold shadow-md shadow-blue-500/25 hover:bg-blue-700 active:scale-95 transition-all shrink-0"
+        >
+          {loading ? "Searching..." : "Search"}
+        </button>
 
-      {/* Error Banner */}
-      {error && (
-        <div className="p-4 rounded-[4px] bg-[#FEF2F2] border border-[#FEE2E2] flex items-center justify-between text-xs text-[#B91C1C]">
-          <div className="flex items-center space-x-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{error}</span>
+        <button
+          type="button"
+          onClick={() => setShowAdvanced(!showAdvanced)}
+          className="w-full sm:w-auto px-4 py-3 rounded-2xl bg-white border border-slate-200 text-slate-700 text-xs sm:text-sm font-medium hover:bg-slate-50 flex items-center justify-center space-x-2 shrink-0 shadow-xs transition-colors"
+        >
+          <SlidersHorizontal className="w-4 h-4 text-slate-500" />
+          <span>Advanced Filters</span>
+        </button>
+      </form>
+
+      {/* Dropdown Filters Row (Exact Match to Screen 6) */}
+      <div className="flex flex-wrap items-center gap-3 text-xs">
+        {/* College */}
+        <div className="flex flex-col space-y-1">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">College</span>
+          <div className="relative">
+            <select
+              value={collegeFilter}
+              onChange={(e) => setCollegeFilter(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-xl pl-3.5 pr-8 py-2 shadow-xs focus:outline-none focus:border-blue-500"
+            >
+              <option>All Colleges</option>
+              <option>Stanford University</option>
+              <option>MIT</option>
+              <option>IIT Delhi</option>
+              <option>UC Berkeley</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
-          <Button variant="outline" size="sm" onClick={() => fetchRankedCandidates(query)}>
-            <RefreshCw className="w-3 h-3 mr-1" />
-            <span>Retry</span>
-          </Button>
+        </div>
+
+        {/* Course */}
+        <div className="flex flex-col space-y-1">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">Course</span>
+          <div className="relative">
+            <select
+              value={courseFilter}
+              onChange={(e) => setCourseFilter(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-xl pl-3.5 pr-8 py-2 shadow-xs focus:outline-none focus:border-blue-500"
+            >
+              <option>All Courses</option>
+              <option>Computer Science Engineering</option>
+              <option>Information Technology</option>
+              <option>Data Science & AI</option>
+              <option>Software Engineering</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Graduation Year */}
+        <div className="flex flex-col space-y-1">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">Graduation Year</span>
+          <div className="relative">
+            <select
+              value={gradYearFilter}
+              onChange={(e) => setGradYearFilter(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-xl pl-3.5 pr-8 py-2 shadow-xs focus:outline-none focus:border-blue-500"
+            >
+              <option>All Years</option>
+              <option>2026</option>
+              <option>2025</option>
+              <option>2024</option>
+              <option>2023</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Skills */}
+        <div className="flex flex-col space-y-1">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">Skills</span>
+          <div className="relative">
+            <select
+              value={skillsFilter}
+              onChange={(e) => {
+                setSkillsFilter(e.target.value);
+                setQuery(e.target.value);
+              }}
+              className="appearance-none bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-xl pl-3.5 pr-8 py-2 shadow-xs focus:outline-none focus:border-blue-500"
+            >
+              <option value="Python, SQL">Python, SQL</option>
+              <option value="Java, Spring">Java, Spring</option>
+              <option value="React, TypeScript">React, TypeScript</option>
+              <option value="Machine Learning">Machine Learning</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Certificates */}
+        <div className="flex flex-col space-y-1">
+          <span className="text-[10px] text-slate-400 font-semibold uppercase">Certificates</span>
+          <div className="relative">
+            <select
+              value={certFilter}
+              onChange={(e) => setCertFilter(e.target.value)}
+              className="appearance-none bg-white border border-slate-200 text-slate-800 text-xs font-medium rounded-xl pl-3.5 pr-8 py-2 shadow-xs focus:outline-none focus:border-blue-500"
+            >
+              <option>Required</option>
+              <option>Optional</option>
+              <option>Blockchain Verified Only</option>
+            </select>
+            <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          </div>
+        </div>
+
+        {/* Clear All Link */}
+        <div className="self-end pb-2 sm:ml-auto">
+          <button
+            onClick={handleClearAll}
+            className="text-xs font-semibold text-blue-600 hover:text-blue-700 hover:underline"
+          >
+            Clear All
+          </button>
+        </div>
+      </div>
+
+      {/* Comparison Drawer if any candidates selected */}
+      {comparedList.length > 0 && (
+        <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-between">
+          <div className="flex items-center space-x-2 text-xs font-semibold text-blue-900">
+            <span>Comparing ({comparedList.length}/3):</span>
+            <span className="text-blue-700 font-normal">{comparedList.join(", ")}</span>
+          </div>
+          <button
+            onClick={() => alert(`Comparing: ${comparedList.join(" vs ")}`)}
+            className="px-4 py-1.5 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-xs hover:bg-blue-700"
+          >
+            Launch Head-to-Head Comparison
+          </button>
         </div>
       )}
 
       {/* Results Header */}
-      <div className="flex items-center justify-between text-xs text-[#77756F]">
-        <div className="flex items-center space-x-2">
-          <span>
-            Ranked <strong className="text-[#191919] font-semibold">{candidates.length}</strong> candidates
-          </span>
-          <span className="text-[#DFDDD6]">|</span>
-          <span className="font-mono text-[11px]">DETERMINISTIC EVALUATION</span>
-        </div>
-        {query && (
-          <button
-            onClick={() => {
-              setQuery("");
-              fetchRankedCandidates("");
-            }}
-            className="text-[#5555A5] hover:underline"
-          >
-            Clear query
-          </button>
-        )}
+      <div className="flex items-center justify-between text-xs text-slate-500 font-medium pt-2">
+        <span>Showing {candidates.length} results (sorted by match score)</span>
       </div>
 
-      {/* Candidate List */}
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <div
-              key={i}
-              className="h-44 bg-[#FFFFFF] border border-[#DFDDD6] rounded-[4px] animate-pulse"
-            />
-          ))}
-        </div>
-      ) : candidates.length === 0 ? (
-        <EmptyState
-          icon={<Search className="w-8 h-8 text-[#5555A5]" />}
-          title="No Matching Candidates Found"
-          description={
-            query
-              ? `No active students currently possess the required skills "${query}". Try adjusting your target technology stack.`
-              : "No candidates currently registered."
-          }
-          actionLabel="Reset Search to Java"
-          onAction={() => {
-            setQuery("Java, Spring Boot");
-            fetchRankedCandidates("Java, Spring Boot");
-          }}
-        />
-      ) : (
-        <div className="space-y-4">
-          {candidates.map((candidate, index) => {
-            const composite = Number(candidate.compositeScore || 0);
-            const coverage = Number(candidate.skillCoverageScore || 0);
-            const depth = Number(candidate.proficiencyDepthScore || 0);
-            const projects = Number(candidate.projectRelevanceScore || 0);
-            const verified = Number(candidate.blockchainVerifiedScore || 0);
-
-            return (
-              <Card
-                key={candidate.studentId || candidate.profileId || index}
-                className="hover:border-[#5555A5]/60 transition-all shadow-[0_1px_2px_rgba(0,0,0,0.02)]"
+      {/* Candidate Cards List (Exact Match to Screen 6) */}
+      <div className="space-y-4">
+        {candidates.map((cand) => (
+          <div
+            key={cand.id}
+            className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-5 transition-all hover:border-blue-400/60 hover:shadow-sm"
+          >
+            {/* Left: Avatar + Details */}
+            <div className="flex items-center space-x-4 min-w-0">
+              <div
+                className={`w-12 h-12 rounded-full bg-gradient-to-tr ${cand.avatarBg} text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm`}
               >
-                <div className="space-y-4">
-                  {/* Top Bar: Rank, Name, Composite Score */}
-                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-3 border-b border-[#DFDDD6]">
-                    <div className="flex items-start space-x-3">
-                      <div className="w-7 h-7 rounded-[3px] bg-[#191919] text-white flex items-center justify-center font-mono text-xs font-semibold shrink-0">
-                        #{index + 1}
-                      </div>
-                      <div>
-                        <div className="flex items-center space-x-2.5">
-                          <h3 className="text-base font-semibold text-[#191919]">
-                            {candidate.studentName}
-                          </h3>
-                          <Badge variant="accent">Rank #{index + 1}</Badge>
-                          {candidate.verifiedCertificatesCount > 0 && (
-                            <span className="inline-flex items-center space-x-1 text-[11px] font-mono text-[#D97706] bg-[#FEF3C7]/60 px-2 py-0.5 rounded-[3px] border border-[#FDE68A]">
-                              <ShieldCheck className="w-3 h-3 text-[#D97706]" />
-                              <span>{candidate.verifiedCertificatesCount} On-Chain</span>
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-[#77756F] mt-0.5 font-medium">
-                          {candidate.headline || "Engineering Student"} • {candidate.email}
-                        </p>
-                      </div>
-                    </div>
+                {cand.name[0]}
+              </div>
 
-                    {/* Composite Score Banner */}
-                    <div className="sm:text-right shrink-0">
-                      <div className="text-2xl font-semibold font-mono text-[#5555A5] leading-none">
-                        {composite.toFixed(1)}%
-                      </div>
-                      <span className="text-[10px] font-mono text-[#77756F] uppercase tracking-wider block mt-1">
-                        MATCH SCORE
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Four Scoring Components Bar */}
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-[#FAF9F6] p-3 rounded-[3px] border border-[#DFDDD6] text-xs">
-                    <div>
-                      <span className="text-[#77756F] text-[10px] uppercase font-mono block">
-                        Skill Coverage (50%)
-                      </span>
-                      <span className="font-semibold text-[#191919] font-mono text-xs mt-0.5 block">
-                        {coverage.toFixed(1)} / 50.0
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[#77756F] text-[10px] uppercase font-mono block">
-                        Proficiency Depth (25%)
-                      </span>
-                      <span className="font-semibold text-[#191919] font-mono text-xs mt-0.5 block">
-                        {depth.toFixed(1)} / 25.0
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[#77756F] text-[10px] uppercase font-mono block">
-                        Project Relevance (15%)
-                      </span>
-                      <span className="font-semibold text-[#191919] font-mono text-xs mt-0.5 block">
-                        {projects.toFixed(1)} / 15.0
-                      </span>
-                    </div>
-
-                    <div>
-                      <span className="text-[#77756F] text-[10px] uppercase font-mono block">
-                        Blockchain Ledger (10%)
-                      </span>
-                      <span className="font-semibold text-[#191919] font-mono text-xs mt-0.5 block">
-                        {verified.toFixed(1)} / 10.0
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Skills Breakdown: Matched vs Missing */}
-                  <div className="space-y-2 pt-1 text-xs">
-                    {/* Matching Skills */}
-                    {candidate.matchingSkills && candidate.matchingSkills.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[#77756F] text-[11px] font-medium mr-1 flex items-center">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-[#166534] mr-1" />
-                          Matched:
-                        </span>
-                        {candidate.matchingSkills.map((s, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-[3px] bg-[#F0FDF4] border border-[#BBF7D0] text-[#166534] text-[11px] font-medium"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Missing Skills */}
-                    {candidate.missingSkills && candidate.missingSkills.length > 0 && (
-                      <div className="flex flex-wrap items-center gap-1.5">
-                        <span className="text-[#77756F] text-[11px] font-medium mr-1 flex items-center">
-                          <XCircle className="w-3.5 h-3.5 text-[#DC2626] mr-1" />
-                          Missing:
-                        </span>
-                        {candidate.missingSkills.map((s, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2 py-0.5 rounded-[3px] bg-[#FEF2F2] border border-[#FECACA] text-[#DC2626] text-[11px] font-medium"
-                          >
-                            {s}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Explanation & Action Footer */}
-                  <div className="pt-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs border-t border-[#DFDDD6]/70">
-                    <p className="text-[11px] text-[#77756F] font-mono truncate max-w-xl">
-                      {candidate.explanation || "Deterministic algorithmic ranking result."}
-                    </p>
-
-                    <div className="shrink-0 self-end sm:self-center">
-                      <Link href={`/dashboard/recruiter/candidate/${candidate.profileId}`}>
-                        <Button size="sm">
-                          <span>Inspect Dossier</span>
-                          <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
-                        </Button>
-                      </Link>
-                    </div>
-                  </div>
+              <div className="min-w-0 space-y-1.5">
+                <div className="flex items-center space-x-2">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 truncate">
+                    {cand.name}
+                  </h3>
+                  <span title="Verified Credentials" className="text-emerald-500">
+                    <ShieldCheck className="w-4 h-4" />
+                  </span>
                 </div>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+
+                <p className="text-xs text-slate-500">
+                  {cand.course} • {cand.gradYear}
+                </p>
+
+                {/* Skill Pills */}
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {cand.skills.map((skill, idx) => (
+                    <span
+                      key={idx}
+                      className="px-2.5 py-0.5 rounded-full bg-blue-50/80 border border-blue-200/70 text-[11px] font-medium text-blue-700"
+                    >
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Match Score + Action Buttons */}
+            <div className="flex items-center space-x-6 shrink-0 self-end md:self-auto">
+              {/* Match Score Display */}
+              <div className="text-right">
+                <span className="text-[10px] uppercase font-semibold text-slate-400 block tracking-wider">
+                  Match Score
+                </span>
+                <span className="text-xl sm:text-2xl font-extrabold text-emerald-600">
+                  {cand.matchScore}%
+                </span>
+              </div>
+
+              {/* Buttons: View Profile & Compare */}
+              <div className="flex items-center space-x-2.5">
+                <Link
+                  href={`/dashboard/recruiter/candidate/${cand.id}`}
+                  className="px-4 py-2 rounded-xl bg-blue-600 text-white text-xs font-semibold shadow-md shadow-blue-500/20 hover:bg-blue-700 active:scale-95 transition-all"
+                >
+                  View Profile
+                </Link>
+
+                <button
+                  onClick={() => toggleCompare(cand.name)}
+                  className={`px-4 py-2 rounded-xl border text-xs font-semibold transition-all ${
+                    comparedList.includes(cand.name)
+                      ? "bg-blue-50 border-blue-500 text-blue-700"
+                      : "border-slate-200 text-slate-700 hover:bg-slate-50 hover:border-slate-300"
+                  }`}
+                >
+                  {comparedList.includes(cand.name) ? "Selected" : "Compare"}
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

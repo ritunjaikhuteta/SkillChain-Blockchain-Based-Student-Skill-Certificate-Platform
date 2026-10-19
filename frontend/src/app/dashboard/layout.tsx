@@ -1,7 +1,6 @@
 "use client";
 
 import { useAuth } from "@/context/AuthContext";
-import { Navbar } from "@/components/Navbar";
 import { Sidebar } from "@/components/Sidebar";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -19,10 +18,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="flex flex-col items-center space-y-2">
-          <Loader2 className="w-6 h-6 animate-spin text-indigo-600" />
-          <span className="text-xs font-medium text-slate-500">Loading workspace...</span>
+      <div className="min-h-screen flex items-center justify-center bg-[#080E1E]">
+        <div className="flex flex-col items-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+          <span className="text-xs font-medium text-slate-400">Loading SkillChain workspace...</span>
         </div>
       </div>
     );
@@ -31,14 +30,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   if (!user) return null;
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50/70">
-      <Navbar />
-      <div className="flex-1 flex max-w-7xl w-full mx-auto">
-        <Sidebar />
-        <main className="flex-1 p-8 overflow-y-auto min-w-0">
-          {children}
-        </main>
-      </div>
+    <div className="min-h-screen flex bg-[#F3F6FB] text-slate-800">
+      {/* Deep Navy Fixed/Sticky Sidebar */}
+      <Sidebar />
+
+      {/* Main Content Area */}
+      <main className="flex-1 flex flex-col min-w-0 overflow-y-auto min-h-screen">
+        {children}
+      </main>
     </div>
   );
 }

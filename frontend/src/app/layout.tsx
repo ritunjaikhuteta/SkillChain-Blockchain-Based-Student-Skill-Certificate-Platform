@@ -22,7 +22,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="h-full">
-      <body className="min-h-full flex flex-col font-sans bg-[#F8F7F3] text-[#191919]">
+      <body className="min-h-full flex flex-col font-sans antialiased">
         <AuthProvider>
           {children}
         </AuthProvider>
