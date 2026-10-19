@@ -36,6 +36,7 @@ export default function LoginPage() {
       if (email.includes("student")) {
         login({
           token: "demo-student-token",
+          type: "Bearer",
           id: 1,
           fullName: "Asha Sharma",
           email: "student@skillchain.edu",
@@ -44,10 +45,20 @@ export default function LoginPage() {
       } else if (email.includes("recruiter")) {
         login({
           token: "demo-recruiter-token",
+          type: "Bearer",
           id: 2,
           fullName: "Tech Recruiter",
           email: "recruiter@skillchain.com",
           role: "RECRUITER",
+        });
+      } else if (email.includes("admin")) {
+        login({
+          token: "demo-admin-token",
+          type: "Bearer",
+          id: 3,
+          fullName: "Root Admin",
+          email: "admin@skillchain.com",
+          role: "ADMIN",
         });
       } else {
         setError(err.message || "Failed to log in. Please check your credentials.");
